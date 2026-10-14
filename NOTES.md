@@ -42,3 +42,24 @@
 - Per-tenant recall returns a different fact for anshu and priya.
 - Runner fix: falkordb-py 1.8.0 returns headers as type/name pairs, so the
   runner reads the name element before printing rows.
+
+## Phase B (Day 2) - agent loop and memory
+
+- Tools (app/tools.py): trace_why, blast_radius, who_knows, recall_memory,
+  curate_memory, supersede_memory, forget_with_receipt, propose_action,
+  approve_action, reject_action, audit_trail, memory_history. Every tool
+  issues parameterized Cypher against exactly one graph.
+- Agent (app/agent.py): scope_resolver, retriever, answer_drafter, then
+  plan_drafter, approval_gate (interrupt, the loop stops), executor,
+  audit_writer. Intent order matters: why, blast, who, memory, then action,
+  so "what breaks if we change Ledger" reads as a blast question.
+- Answers are template-drafted from tool evidence only (no Groq key in this
+  sandbox); the Groq path with neutral User-Agent is coded and falls back
+  cleanly. Every claim cites a source_ref.
+- Memory: content-hash MERGE; re-curation past superseded history mints a
+  -rN id so history is never rewritten; receipts carry timestamps so the
+  newest erasure wins the negative-recall quote.
+- Outage (verified with FalkorDB stopped): /health reports down and every
+  endpoint returns the exact fallback message. Restart restores full answers.
+- E2E residue by design: superseded history facts, erasure receipts, and
+  decided Action nodes stay in the graphs as audit artifacts.
