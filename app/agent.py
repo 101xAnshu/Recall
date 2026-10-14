@@ -24,10 +24,13 @@ PRIMARY_MODEL = "openai/gpt-oss-120b"
 
 ACTION_WORDS = ("migrate", "move", "decommission", "deploy", "freeze",
                 "rollback", "switch", "upgrade", "change", "shut down")
-WHY_WORDS = ("why", "caused", "cause", "root cause", "happen", "incident")
-BLAST_WORDS = ("blast", "break", "affect", "impact", "what if", "touch")
+WHY_WORDS = ("why", "caused", "cause", "root cause", "happen", "incident",
+               "commit", "evidence", "decid")
+BLAST_WORDS = ("blast", "break", "affect", "impact", "what if", "touch",
+                "depend", "downstream")
 WHO_WORDS = ("who knows", "expert", "owner", "who owns", "familiar")
-MEMORY_WORDS = ("remember", "recall", "forget", "forgot", "memory", "my ")
+MEMORY_WORDS = ("remember", "recall", "forget", "forgot", "memory", "my ",
+                "current")
 STOPWORDS = {"what", "was", "were", "the", "about", "that", "this", "with",
              "from", "have", "does", "did", "and", "for", "are", "you", "your"}
 
@@ -81,7 +84,12 @@ def scope_resolver(state):
     incident = (re.search(r"INC-\d+", q, re.IGNORECASE) or [None])[0]
     if incident:
         incident = incident.upper()
-    service = next((s for s in _service_names() if s.lower() in low), None)
+    names = _service_names()
+    changed = re.search(r"chang(?:e|ing)\s+([A-Za-z]+)", q)
+    changed_name = changed.group(1).lower() if changed else ""
+    service = next((s for s in names if s.lower() == changed_name), None)
+    if service is None:
+        service = next((s for s in names if s.lower() in low), None)
     topic = next((t for t in _topic_names() if t.lower() in low), None)
     if "payout" in low and topic is None and "payout-retry" in _topic_names():
         topic = "payout-retry"
@@ -90,7 +98,7 @@ def scope_resolver(state):
         intent = "why"
     elif _has_any(low, BLAST_WORDS):
         intent = "blast"
-    elif _has_any(low, WHO_WORDS) or topic:
+    elif _has_any(low, WHO_WORDS) or topic or low.startswith("who"):
         intent = "who"
     elif _has_any(low, MEMORY_WORDS):
         intent = "memory"
@@ -128,10 +136,12 @@ def retriever(state):
         evidence = [{"source": "org", "kind": "why-path",
                      "trace": p["trace"], "hops": p["hops"],
                      "edges": p.get("edges", []),
+                     "dates": p.get("dates", []),
                      "evidence": p["evidence"]} for p in res["paths"]]
     elif intent in ("blast", "action"):
         res = tools.blast_radius(state.get("service") or "Ledger")
         evidence = [{"source": "org", "kind": "blast-radius",
+                     "service": res["service"],
                      "affected": res["affected"]}]
     elif intent == "who":
         res = tools.who_knows(state.get("topic") or "payout-retry")
@@ -141,7 +151,7 @@ def retriever(state):
         mem = tools.recall_memory(user_id)
         evidence.append({"source": user_graph_label(user_id), "kind": "memory",
                          "facts": mem["facts"]})
-    if scope == "both":
+    elif scope == "both":
         mem = tools.recall_memory(user_id)
         evidence.append({"source": user_graph_label(user_id), "kind": "memory",
                          "facts": mem["facts"]})
@@ -193,6 +203,10 @@ def _template_draft(state):
         return "\n".join(lines)
     if intent in ("blast", "action") and evidence:
         rows = evidence[0].get("affected", [])
+        service = evidence[0].get("service", "this service")
+        if not rows:
+            return (f"Changing {service} affects no other services "
+                    "according to the dependency graph.")
         lines = [f"{r['affected']} (owner {r['owner_team']})" for r in rows]
         refs = ", ".join(r.get("source_ref", "") for r in rows)
         return ("Changing this service affects: " + "; ".join(lines)
