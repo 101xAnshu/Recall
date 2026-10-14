@@ -33,6 +33,26 @@ def _fact_id(text):
     return "fact-" + hashlib.sha1(text.encode("utf-8")).hexdigest()[:8]
 
 
+def _resolve_fact_id(g, base):
+    """Pick a usable fact id: reuse a current node, else suffix past history.
+
+    Forgotten nodes are gone so their hash is free again; superseded nodes
+    stay as history, so re-curated text gets a -rN suffix. History is never
+    rewritten.
+    """
+    fid, n = base, 1
+    while True:
+        rows = _rows(
+            g, "MATCH (f:MemoryFact {id: $fid}) "
+            "RETURN f.valid_until AS valid", {"fid": fid})
+        if not rows:
+            return fid, False
+        if any(r["valid"] is None for r in rows):
+            return fid, True
+        n += 1
+        fid = f"{base}-r{n}"
+
+
 # Retrieval tools (org graph)
 
 
@@ -147,12 +167,9 @@ def memory_history(user_id):
 
 def curate_memory(user_id, text, salience=0.8):
     """Episodic to semantic MERGE on the content hash (idempotent)."""
-    fact_id = _fact_id(text)
+    base = _fact_id(text)
     g = _user(user_id)
-    exists = _rows(
-        g, "MATCH (f:MemoryFact {id: $fid}) RETURN f.id AS fact_id",
-        {"fid": fact_id},
-    )
+    fact_id, reuse = _resolve_fact_id(g, base)
     g.query(
         "MERGE (p:Person {id: $user}) "
         "ON CREATE SET p.name = $uname, p.source_type = 'synthetic', "
@@ -168,7 +185,7 @@ def curate_memory(user_id, text, salience=0.8):
         {"fid": fact_id, "text": text, "salience": salience, "at": TODAY,
          "fref": f"memory/users/{user_id}/{fact_id}"},
     )
-    created = not exists
+    created = not reuse
     g.query(
         "MATCH (p:Person {id: $user}), (f:MemoryFact {id: $fid}) "
         "MERGE (p)-[:REMEMBERS]->(f)",
@@ -179,8 +196,8 @@ def curate_memory(user_id, text, salience=0.8):
 
 def supersede_memory(user_id, fact_id, new_text):
     """Version a fact: new node SUPERSEDES old, old gets valid_until set."""
-    new_id = _fact_id(new_text)
-    if new_id == fact_id:
+    base = _fact_id(new_text)
+    if base == fact_id:
         raise ValueError("new text is identical to the current fact")
     g = _user(user_id)
     found = _rows(
@@ -191,6 +208,7 @@ def supersede_memory(user_id, fact_id, new_text):
     )
     if not found:
         raise ValueError(f"no current fact {fact_id} for user {user_id}")
+    new_id, _ = _resolve_fact_id(g, base)
     g.query(
         "MERGE (f:MemoryFact {id: $fid}) "
         "ON CREATE SET f.text = $text, f.salience = 0.8, f.at = $at, "
