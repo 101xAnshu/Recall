@@ -65,6 +65,7 @@ def trace_why(incident_id="INC-231"):
         "RETURN [x IN nodes(p) | labels(x)[0] + ': ' "
         "+ coalesce(x.title, x.name, x.message, x.id)] AS trace, "
         "[x IN nodes(p) | x.source_ref] AS evidence, "
+        "[r IN relationships(p) | type(r)] AS edges, "
         "length(p) AS hops ORDER BY hops DESC LIMIT 5",
         {"incident_id": incident_id},
     )
@@ -79,12 +80,14 @@ def blast_radius(service="Ledger"):
     rows = _rows(
         _org(),
         "MATCH (s:Service {name: $service}) "
-        "CALL { WITH s MATCH (s)<-[:DEPENDS_ON*1..3]-(d:Service) "
-        "RETURN d AS svc UNION WITH s "
-        "MATCH (s)-[:AFFECTS*1..3]->(a:Service) RETURN a AS svc } "
+        "CALL { WITH s MATCH p = (s)<-[:DEPENDS_ON*1..3]-(d:Service) "
+        "RETURN d AS svc, length(p) AS hops UNION WITH s "
+        "MATCH p = (s)-[:AFFECTS*1..3]->(a:Service) "
+        "RETURN a AS svc, length(p) AS hops } "
         "MATCH (t:Team)-[:OWNS]->(svc) "
-        "RETURN DISTINCT svc.name AS affected, t.name AS owner_team, "
-        "svc.source_ref AS source_ref ORDER BY affected",
+        "RETURN svc.name AS affected, t.name AS owner_team, "
+        "svc.source_ref AS source_ref, min(hops) AS hops "
+        "ORDER BY affected",
         {"service": service},
     )
     if not rows:
@@ -124,6 +127,17 @@ def who_knows(topic="payout-retry"):
         for r in rows
     ]
     return {"topic": topic, "experts": experts}
+
+
+def list_services():
+    """All services with owner teams, for contrast rows in the UI."""
+    rows = _rows(
+        _org(),
+        "MATCH (s:Service) OPTIONAL MATCH (t:Team)-[:OWNS]->(s) "
+        "RETURN s.name AS name, t.name AS owner_team, "
+        "s.source_ref AS source_ref ORDER BY name",
+    )
+    return {"services": rows}
 
 
 # Memory tools (per-user graphs)

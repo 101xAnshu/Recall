@@ -7,13 +7,22 @@ unreachable. Unknown entities return honest 404 errors, never guesses.
 import os
 
 from fastapi import FastAPI
+from fastapi.middleware.cors import CORSMiddleware
 from pydantic import BaseModel
 
+import app.graph as graph_mod
 from app import agent as agent_loop
 from app import tools
 from app.graph import FALLBACK_MESSAGE, ORG_GRAPH, get_db
 
 app = FastAPI(title="Meridian Pay backend")
+
+app.add_middleware(
+    CORSMiddleware,
+    allow_origins=["http://localhost:3000"],
+    allow_methods=["*"],
+    allow_headers=["*"],
+)
 
 FALLBACK = {"error": FALLBACK_MESSAGE}
 APP_USER = os.getenv("APP_USER_ID", "anshu")
@@ -203,3 +212,37 @@ def audit():
         return tools.audit_trail()
     except Exception:
         return _outage()
+
+
+@app.get("/services")
+def services():
+    try:
+        return tools.list_services()
+    except Exception:
+        return _outage()
+
+
+@app.get("/memory/history")
+def memory_history(user_id: str = "anshu"):
+    try:
+        return tools.memory_history(user_id)
+    except Exception:
+        return _outage()
+
+
+@app.post("/admin/disconnect")
+def admin_disconnect():
+    """Demo kill-switch: simulate a FalkorDB outage without stopping it."""
+    graph_mod.SIMULATED_OUTAGE = True
+    return {"falkordb": "down", "simulated": True}
+
+
+@app.post("/admin/reconnect")
+def admin_reconnect():
+    """Demo kill-switch: restore FalkorDB connectivity."""
+    graph_mod.SIMULATED_OUTAGE = False
+    try:
+        get_db().select_graph(ORG_GRAPH).query("RETURN 1")
+        return {"falkordb": "ok", "simulated": False}
+    except Exception:
+        return {"falkordb": "down", "simulated": False}

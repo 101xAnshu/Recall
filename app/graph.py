@@ -24,6 +24,10 @@ FALKORDB_HOST = os.getenv("FALKORDB_HOST", "localhost")
 FALKORDB_PORT = int(os.getenv("FALKORDB_PORT", "6379"))
 ORG_GRAPH = os.getenv("ORG_GRAPH", "org")
 
+# Demo kill-switch: when True the app behaves as if FalkorDB is
+# unreachable, so the outage coda records without stopping the container.
+SIMULATED_OUTAGE = False
+
 
 def user_graph_name(user_id: str) -> str:
     return f"user_{user_id}"
@@ -31,6 +35,8 @@ def user_graph_name(user_id: str) -> str:
 
 def get_db():
     """Construct a FalkorDB client. Always call inside try/except."""
+    if SIMULATED_OUTAGE:
+        raise ConnectionError("simulated outage (demo kill-switch)")
     return FalkorDB(host=FALKORDB_HOST, port=FALKORDB_PORT)
 
 

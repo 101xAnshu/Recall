@@ -127,6 +127,7 @@ def retriever(state):
         trace = res["trace"]
         evidence = [{"source": "org", "kind": "why-path",
                      "trace": p["trace"], "hops": p["hops"],
+                     "edges": p.get("edges", []),
                      "evidence": p["evidence"]} for p in res["paths"]]
     elif intent in ("blast", "action"):
         res = tools.blast_radius(state.get("service") or "Ledger")
