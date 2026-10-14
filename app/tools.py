@@ -8,7 +8,7 @@ two graphs. Provenance (source_type + source_ref) is set on every node.
 import hashlib
 import json
 import uuid
-from datetime import date
+from datetime import date, datetime
 
 from app.graph import ORG_GRAPH, get_db, user_graph_name
 
@@ -252,7 +252,7 @@ def forget_with_receipt(user_id, fact_id):
         "r.scope = $user, r.source_type = 'synthetic', "
         "r.source_ref = $rref",
         {"rid": receipt_id, "fid": fact_id, "text": found[0]["text"],
-         "at": TODAY, "user": user_id,
+         "at": datetime.now().isoformat(timespec="seconds"), "user": user_id,
          "rref": f"memory/users/{user_id}/{receipt_id}"},
     )
     return {"receipt_id": receipt_id}
