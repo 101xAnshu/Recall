@@ -198,6 +198,13 @@ def _template_draft(state):
     evidence = state.get("evidence", [])
     if intent == "why" and evidence:
         lines = [" -> ".join(state.get("trace", []))]
+        people = []
+        for e in evidence:
+            for p in e.get("trace", []):
+                if p.startswith("Person: ") and p[8:] not in people:
+                    people.append(p[8:])
+        if people:
+            lines.append("People on this path: " + ", ".join(people))
         refs = evidence[0].get("evidence", [])
         lines.append("Evidence: " + ", ".join(refs))
         return "\n".join(lines)
@@ -243,10 +250,10 @@ def answer_drafter(state):
         user_id = state.get("user_id", "anshu")
         facts = [f for e in evidence if e.get("kind") == "memory"
                  for f in e.get("facts", [])]
-        if not _overlaps(question, [f.get("text") for f in facts]):
-            quote = _erasure_quote(question, user_id)
-            if quote:
-                return {"answer": quote}
+        overlap = _overlaps(question, [f.get("text") for f in facts])
+        quote = _erasure_quote(question, user_id, overlap)
+        if quote:
+            return {"answer": quote}
     drafted = _llm_draft(state.get("question", ""), evidence)
     return {"answer": drafted or _template_draft(state)}
 
@@ -258,21 +265,21 @@ def _qtokens(question):
 
 def _overlaps(question, texts):
     qtokens = _qtokens(question)
+    best = 0
     for text in texts:
         rtokens = {w.strip(".,?").lower() for w in (text or "").split()}
-        if qtokens & rtokens:
-            return True
-    return False
+        best = max(best, len(qtokens & rtokens))
+    return best
 
 
-def _erasure_quote(question, user_id):
+def _erasure_quote(question, user_id, fact_overlap):
     """Negative-recall proof: quote the receipt when the fact is erased."""
     try:
         hist = tools.memory_history(user_id)
     except Exception:
         return None
     for r in hist.get("receipts", []):
-        if _overlaps(question, [r.get("text")]):
+        if _overlaps(question, [r.get("text")]) > fact_overlap:
             return ("I no longer have that fact in active memory. "
                     f"I can show you the erasure receipt {r['receipt_id']}.")
     return None
