@@ -83,19 +83,19 @@ def scope_resolver(state):
         incident = incident.upper()
     service = next((s for s in _service_names() if s.lower() in low), None)
     topic = next((t for t in _topic_names() if t.lower() in low), None)
-    if "retry" in low and topic is None and "payout-retry" in _topic_names():
+    if "payout" in low and topic is None and "payout-retry" in _topic_names():
         topic = "payout-retry"
 
-    if _has_any(low, ACTION_WORDS):
-        intent = "action"
-    elif _has_any(low, WHY_WORDS) or incident:
+    if _has_any(low, WHY_WORDS) or incident:
         intent = "why"
-    elif _has_any(low, BLAST_WORDS) or (service and "service" in low):
+    elif _has_any(low, BLAST_WORDS):
         intent = "blast"
     elif _has_any(low, WHO_WORDS) or topic:
         intent = "who"
     elif _has_any(low, MEMORY_WORDS):
         intent = "memory"
+    elif _has_any(low, ACTION_WORDS):
+        intent = "action"
     elif service:
         intent = "blast"
     else:
@@ -224,15 +224,30 @@ def answer_drafter(state):
     """Draft a sourced answer, checking erasure receipts for memory gaps."""
     evidence = state.get("evidence", [])
     if state.get("intent") == "memory":
+        question = state.get("question", "")
+        user_id = state.get("user_id", "anshu")
         facts = [f for e in evidence if e.get("kind") == "memory"
                  for f in e.get("facts", [])]
-        if not facts:
-            quote = _erasure_quote(state.get("question", ""),
-                                   state.get("user_id", "anshu"))
+        if not _overlaps(question, [f.get("text") for f in facts]):
+            quote = _erasure_quote(question, user_id)
             if quote:
                 return {"answer": quote}
     drafted = _llm_draft(state.get("question", ""), evidence)
     return {"answer": drafted or _template_draft(state)}
+
+
+def _qtokens(question):
+    toks = {w.strip(".,?").lower() for w in question.split()}
+    return {w for w in toks if len(w) >= 4} - STOPWORDS
+
+
+def _overlaps(question, texts):
+    qtokens = _qtokens(question)
+    for text in texts:
+        rtokens = {w.strip(".,?").lower() for w in (text or "").split()}
+        if qtokens & rtokens:
+            return True
+    return False
 
 
 def _erasure_quote(question, user_id):
@@ -241,11 +256,8 @@ def _erasure_quote(question, user_id):
         hist = tools.memory_history(user_id)
     except Exception:
         return None
-    qtokens = {w.strip(".,?").lower() for w in question.split()}
-    qtokens = {w for w in qtokens if len(w) >= 4} - STOPWORDS
     for r in hist.get("receipts", []):
-        rtokens = {w.strip(".,?").lower() for w in (r.get("text") or "").split()}
-        if qtokens and rtokens and qtokens & rtokens:
+        if _overlaps(question, [r.get("text")]):
             return ("I no longer have that fact in active memory. "
                     f"I can show you the erasure receipt {r['receipt_id']}.")
     return None
