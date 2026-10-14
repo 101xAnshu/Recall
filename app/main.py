@@ -68,6 +68,12 @@ class RejectRequest(BaseModel):
     reason: str = ""
 
 
+class EvalRequest(BaseModel):
+    limit: int | None = None
+    mock: bool = False
+    judge: bool = True
+
+
 def _outage():
     return FALLBACK
 
@@ -211,6 +217,23 @@ def audit():
     try:
         return tools.audit_trail()
     except Exception:
+        return _outage()
+
+
+@app.post("/eval/run")
+def eval_run(req: EvalRequest):
+    try:
+        import importlib.util
+        root = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+        path = os.path.join(root, "eval", "run.py")
+        spec = importlib.util.spec_from_file_location("eval_run_mod", path)
+        mod = importlib.util.module_from_spec(spec)
+        spec.loader.exec_module(mod)
+        return mod.run_benchmark(limit=req.limit, mock=req.mock,
+                                 judge=req.judge)
+    except Exception as exc:
+        if "GROQ_API_KEY" in str(exc):
+            return {"error": str(exc)}
         return _outage()
 
 
