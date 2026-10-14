@@ -63,3 +63,23 @@
   endpoint returns the exact fallback message. Restart restores full answers.
 - E2E residue by design: superseded history facts, erasure receipts, and
   decided Action nodes stay in the graphs as audit artifacts.
+
+## Phase C - UI screens
+
+- Frontend stack, all latest: Next 16, React 19, Tailwind 4, TypeScript 7.
+  Tokens: white cards, #f0f0f0 hairlines, 18px radius, #2575ff single
+  accent, near-total monochrome otherwise.
+- Chrome: 240px sidebar (Meridian logo, 5 screens, Connect GitHub, Help),
+  topbar with Meridian Pay breadcrumb, /health status pill, Anshu/Priya
+  switcher, and a labeled demo kill-switch backed by admin endpoints.
+- Screens wired to localhost:8000 with no mock data. Ask renders the traced
+  timeline with mono edge labels plus collapsible source_ref chips. Blast
+  shows affected/owner/depth stats with Settlement muted. Who-knows renders
+  score bars with breakdowns and latest activity. Approvals lists pending
+  plans with approve/reject above the audit timeline. Memory shows current
+  facts, a history toggle (superseded plus receipts with the exact quote),
+  and remember/supersede/forget controls per employee graph.
+- Backend support added for the UI: CORS, /admin/disconnect and
+  /admin/reconnect (simulated outage, same fallback path as a real one),
+  /services, /memory/history, edge labels on why-paths, hop depth on blast
+  radius, and plan text on audit entries.
