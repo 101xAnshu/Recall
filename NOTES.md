@@ -1,6 +1,6 @@
 # Build notes (running log, for Day-4 README assembly)
 
-## Phase A (Day 1) - data and schema
+## Phase A - data and schema
 
 - FalkorDB image: falkordb/falkordb:6.0.1 (exact pin, never latest)
 - Backend stack: FastAPI, falkordb client, groq, fastembed (BAAI/bge-small-en-v1.5), LangGraph
@@ -43,7 +43,7 @@
 - Runner fix: falkordb-py 1.8.0 returns headers as type/name pairs, so the
   runner reads the name element before printing rows.
 
-## Phase B (Day 2) - agent loop and memory
+## Phase B - agent loop and memory
 
 - Tools (app/tools.py): trace_why, blast_radius, who_knows, recall_memory,
   curate_memory, supersede_memory, forget_with_receipt, propose_action,
