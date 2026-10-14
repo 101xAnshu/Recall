@@ -50,18 +50,31 @@ def load_questions():
     return qs
 
 
+def _norm(text):
+    """Fold Unicode dashes/spaces to ASCII so LLM typography cannot
+    break substring scoring. Applied equally to answers and items."""
+    import unicodedata
+    text = unicodedata.normalize("NFKC", text or "").lower()
+    for ch in ("\u2010", "\u2011", "\u2012", "\u2013", "\u2014", "\u2212"):
+        text = text.replace(ch, "-")
+    for ch in ("\u00a0", "\u2000", "\u2001", "\u2002", "\u2003", "\u2004",
+               "\u2005", "\u2006", "\u2007", "\u2008", "\u2009", "\u200a",
+               "\u202f", "\u205f", "\u3000"):
+        text = text.replace(ch, " ")
+    return " ".join(text.split())
+
+
 def score_answer(answer, expected):
-    answer = answer or ""
-    low = answer.lower()
+    normed = _norm(answer)
     checks = []
     for key in ("required_nodes", "required_services", "required_people",
                 "required_phrases"):
         for item in expected.get(key, []):
             checks.append({"item": item, "kind": key,
-                           "passed": item.lower() in low})
+                           "passed": _norm(item) in normed})
     for item in expected.get("forbidden_text", []):
         checks.append({"item": item, "kind": "forbidden_text",
-                       "passed": item.lower() not in low})
+                       "passed": _norm(item) not in normed})
     score = sum(1 for c in checks if c["passed"]) / len(checks)
     return score, checks
 
