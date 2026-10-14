@@ -2,8 +2,10 @@
 
 Read-only, parameterized, one graph per query. Adapted to the product spec
 model: the why-path coalesce covers title, name, message and id; the
-who-knows third pattern is a single OPTIONAL MATCH pair for FalkorDB compat;
-the blast-radius AFFECTS branch is kept for shape but empty in this model.
+who-knows third pattern is a single OPTIONAL MATCH pair for FalkorDB compat
+and latest_activity is the max evidence-node at date; bus factor is defined
+on WORKS_ON staffing since ownership in this model is Team-level; the
+blast-radius AFFECTS branch is kept for shape but empty in this model.
 
 Usage, from repo root: python scripts/hero_queries.py
 """
@@ -40,7 +42,8 @@ OPTIONAL MATCH (p)-[r1:WORKS_ON]->(x1)-[:MENTIONS]->(t)
 OPTIONAL MATCH (p)-[r2:AUTHORED]->(x2)-[:MENTIONS]->(t)
 OPTIONAL MATCH (i:Incident)-[r3:RESOLVED_BY]->(p), (i)-[:MENTIONS]->(t)
 WITH p, count(DISTINCT r1) AS worked, count(DISTINCT r2) AS authored,
-     count(DISTINCT r3) AS resolved, max(coalesce(r1.at, r2.at, r3.at)) AS latest
+     count(DISTINCT r3) AS resolved,
+     max(coalesce(x1.at, x2.at, i.at)) AS latest
 WITH p, worked, authored, resolved, latest,
      (worked * 1.0 + authored * 1.5 + resolved * 2.0) AS score
 WHERE score > 0
@@ -51,9 +54,10 @@ ORDER BY score DESC, latest DESC LIMIT 5
 """
 
 BUS_FACTOR = """
-MATCH (p:Person)-[:OWNS|AUTHORED]->(s:Service)
-WITH s, collect(p) AS owners WHERE size(owners) = 1
-RETURN s.name AS service, owners[0].name AS sole_owner
+MATCH (p:Person)-[:WORKS_ON]->(s:Service)
+WITH s, collect(p.name) AS staff WHERE size(staff) = 1
+RETURN s.name AS service, staff[0] AS sole_worker
+ORDER BY service
 """
 
 MEMORY_RECALL = """

@@ -11,27 +11,29 @@ from app.graph import ORG_GRAPH, get_db, user_graph_name
 ORG_STATEMENTS = [
     # Teams
     "MERGE (t:Team {id: 'team-payments'}) "
-    "SET t.name = 'Payments-team', t.source_type = 'synthetic', "
+    "SET t.name = 'Payments-team', t.at = '2026-01-10', "
+    "t.source_type = 'synthetic', "
     "t.source_ref = 'seed/org/teams/payments-team'",
     "MERGE (t:Team {id: 'team-growth'}) "
-    "SET t.name = 'Growth-team', t.source_type = 'synthetic', "
+    "SET t.name = 'Growth-team', t.at = '2026-01-10', "
+    "t.source_type = 'synthetic', "
     "t.source_ref = 'seed/org/teams/growth-team'",
     # Services (Ledger is the provider, Settlement is isolated contrast)
     "MERGE (s:Service {id: 'svc-ledger'}) "
-    "SET s.name = 'Ledger', s.owner_team = 'Payments-team', "
+    "SET s.name = 'Ledger', s.owner_team = 'Payments-team', s.at = '2026-03-10', "
     "s.source_type = 'synthetic', s.source_ref = 'seed/org/services/ledger'",
     "MERGE (s:Service {id: 'svc-payments'}) "
-    "SET s.name = 'Payments', s.owner_team = 'Payments-team', "
+    "SET s.name = 'Payments', s.owner_team = 'Payments-team', s.at = '2026-04-02', "
     "s.source_type = 'synthetic', s.source_ref = 'seed/org/services/payments'",
     "MERGE (s:Service {id: 'svc-retry'}) "
-    "SET s.name = 'Retry', s.owner_team = 'Growth-team', "
+    "SET s.name = 'Retry', s.owner_team = 'Growth-team', s.at = '2026-06-18', "
     "s.source_type = 'synthetic', s.source_ref = 'seed/org/services/retry'",
     "MERGE (s:Service {id: 'svc-notifications'}) "
     "SET s.name = 'Notifications', s.owner_team = 'Growth-team', "
-    "s.source_type = 'synthetic', "
+    "s.at = '2026-07-25', s.source_type = 'synthetic', "
     "s.source_ref = 'seed/org/services/notifications'",
     "MERGE (s:Service {id: 'svc-settlement'}) "
-    "SET s.name = 'Settlement', s.owner_team = 'Growth-team', "
+    "SET s.name = 'Settlement', s.owner_team = 'Growth-team', s.at = '2026-05-30', "
     "s.source_type = 'synthetic', s.source_ref = 'seed/org/services/settlement'",
     # Ownership (Team OWNS Service)
     "MATCH (t:Team {id: 'team-payments'}), (s:Service {id: 'svc-ledger'}) "
@@ -53,13 +55,13 @@ ORG_STATEMENTS = [
     "MERGE (a)-[:DEPENDS_ON]->(b)",
     # People (team is a property, per the spec node table)
     "MERGE (p:Person {id: 'anshu'}) "
-    "SET p.name = 'Anshu', p.team = 'Payments-team', "
+    "SET p.name = 'Anshu', p.team = 'Payments-team', p.at = '2026-02-01', "
     "p.source_type = 'synthetic', p.source_ref = 'seed/org/people/anshu'",
     "MERGE (p:Person {id: 'priya'}) "
-    "SET p.name = 'Priya', p.team = 'Payments-team', "
+    "SET p.name = 'Priya', p.team = 'Payments-team', p.at = '2026-02-15', "
     "p.source_type = 'synthetic', p.source_ref = 'seed/org/people/priya'",
     "MERGE (p:Person {id: 'ravi'}) "
-    "SET p.name = 'Ravi', p.team = 'Growth-team', "
+    "SET p.name = 'Ravi', p.team = 'Growth-team', p.at = '2026-05-01', "
     "p.source_type = 'synthetic', p.source_ref = 'seed/org/people/ravi'",
     "MATCH (p:Person {id: 'ravi'}), (s:Service {id: 'svc-notifications'}) "
     "MERGE (p)-[:WORKS_ON]->(s)",

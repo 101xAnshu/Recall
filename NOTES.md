@@ -16,8 +16,11 @@
 - Topic payout-retry is mentioned by the four knowledge nodes (INC-231,
   PM-231, ADR-14, commit 7f3c) and by the Notifications service, so the
   who-knows ranking shows Priya 2.0, Anshu 1.5, Ravi 1.0.
-- Bus factor is run as specified (Person OWNS or AUTHORED a Service); the
-  spec seed uses Team ownership, so an empty result is correct, not a bug.
+- Bus factor is defined on WORKS_ON staffing: a service with exactly one
+  person working on it is a single point of failure. Ownership in this model
+  is Team-level, so the query does not use OWNS. Services with no staff at
+  all (Ledger, Payments, Retry, Settlement) have no coverage, which the
+  runner notes alongside the single-staffer rows.
 
 ### Environment notes
 - Spec target is Python 3.12; this sandbox runs the seed and queries with the
@@ -32,9 +35,10 @@
 - Blast radius for Ledger returns Payments, Retry, Notifications with owners.
   Settlement is correctly excluded.
 - Who-knows for payout-retry returns Priya 2.0, Anshu 1.5, Ravi 1.0 with
-  breakdowns. latest_activity is null because edges carry no timestamps.
-- Bus factor returns no rows, which is correct: ownership in this model is
-  Team-level, and no Person OWNS or AUTHORED a Service.
+  breakdowns. latest_activity comes from evidence-node at dates
+  (INC-231, ADR-14, Notifications service); every seed node now carries at.
+- Bus factor returns Notifications staffed only by Ravi. Ledger, Payments,
+  Retry and Settlement have no WORKS_ON coverage at all.
 - Per-tenant recall returns a different fact for anshu and priya.
 - Runner fix: falkordb-py 1.8.0 returns headers as type/name pairs, so the
   runner reads the name element before printing rows.
