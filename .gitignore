@@ -1,0 +1,17 @@
+# Local-only agent instructions, never commit
+AGENTS.md
+
+# Secrets
+.env
+
+# Python
+__pycache__/
+*.pyc
+.venv/
+
+# Node
+node_modules/
+.next/
+
+# OS
+.DS_Store
