@@ -66,6 +66,7 @@ def trace_why(incident_id="INC-231"):
         "+ coalesce(x.title, x.name, x.message, x.id)] AS trace, "
         "[x IN nodes(p) | x.source_ref] AS evidence, "
         "[r IN relationships(p) | type(r)] AS edges, "
+        "[x IN nodes(p) | x.at] AS dates, "
         "length(p) AS hops ORDER BY hops DESC LIMIT 5",
         {"incident_id": incident_id},
     )
@@ -77,6 +78,12 @@ def trace_why(incident_id="INC-231"):
 
 def blast_radius(service="Ledger"):
     """Dependents of a service via incoming DEPENDS_ON (CALL UNION shape)."""
+    known = _rows(
+        _org(), "MATCH (s:Service {name: $service}) RETURN s.name AS name",
+        {"service": service},
+    )
+    if not known:
+        raise ValueError(f"unknown service {service}")
     rows = _rows(
         _org(),
         "MATCH (s:Service {name: $service}) "
@@ -90,8 +97,6 @@ def blast_radius(service="Ledger"):
         "ORDER BY affected",
         {"service": service},
     )
-    if not rows:
-        raise ValueError(f"unknown service {service}")
     return {"service": service, "affected": rows}
 
 
