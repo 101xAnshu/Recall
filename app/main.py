@@ -1,10 +1,66 @@
-"""FastAPI entrypoint for the Meridian Pay backend."""
+"""FastAPI backend for Meridian Pay (product spec section 5).
+
+Every endpoint degrades to the fallback message when FalkorDB is
+unreachable. Unknown entities return honest 404 errors, never guesses.
+"""
+
+import os
 
 from fastapi import FastAPI
+from pydantic import BaseModel
 
-from app.graph import ORG_GRAPH, get_db
+from app import agent as agent_loop
+from app import tools
+from app.graph import FALLBACK_MESSAGE, ORG_GRAPH, get_db
 
 app = FastAPI(title="Meridian Pay backend")
+
+FALLBACK = {"error": FALLBACK_MESSAGE}
+APP_USER = os.getenv("APP_USER_ID", "anshu")
+
+
+class AskRequest(BaseModel):
+    question: str
+    user_id: str = "anshu"
+
+
+class RememberRequest(BaseModel):
+    user_id: str
+    text: str
+    salience: float = 0.8
+
+
+class SupersedeRequest(BaseModel):
+    user_id: str
+    fact_id: str
+    new_text: str
+
+
+class ForgetRequest(BaseModel):
+    user_id: str
+    fact_id: str
+
+
+class ProposeRequest(BaseModel):
+    goal: str
+    user_id: str = "anshu"
+
+
+class ApproveRequest(BaseModel):
+    action_id: str
+    thread_id: str = ""
+    by: str = APP_USER
+
+
+class RejectRequest(BaseModel):
+    action_id: str
+    thread_id: str = ""
+    by: str = APP_USER
+    reason: str = ""
+
+
+def _outage():
+    return FALLBACK
 
 
 @app.get("/health")
@@ -20,3 +76,130 @@ def health():
 @app.get("/")
 def root():
     return {"service": "meridian-pay", "docs": "/docs"}
+
+
+@app.post("/ask")
+def ask(req: AskRequest):
+    """Main agent endpoint: scope, retrieve, draft, or pause for approval."""
+    try:
+        out = agent_loop.run_ask(req.question, req.user_id)
+    except Exception:
+        return _outage()
+    if "error" in out:
+        return _outage()
+    return out
+
+
+@app.get("/blast-radius")
+def blast_radius(service: str = "Ledger"):
+    try:
+        return tools.blast_radius(service)
+    except ValueError as exc:
+        return {"error": str(exc)}
+    except Exception:
+        return _outage()
+
+
+@app.get("/who-knows")
+def who_knows(topic: str = "payout-retry"):
+    try:
+        return tools.who_knows(topic)
+    except ValueError as exc:
+        return {"error": str(exc)}
+    except Exception:
+        return _outage()
+
+
+@app.post("/memory/remember")
+def remember(req: RememberRequest):
+    try:
+        return tools.curate_memory(req.user_id, req.text, req.salience)
+    except Exception:
+        return _outage()
+
+
+@app.post("/memory/supersede")
+def supersede(req: SupersedeRequest):
+    try:
+        return tools.supersede_memory(req.user_id, req.fact_id, req.new_text)
+    except ValueError as exc:
+        return {"error": str(exc)}
+    except Exception:
+        return _outage()
+
+
+@app.post("/memory/forget")
+def forget(req: ForgetRequest):
+    try:
+        return tools.forget_with_receipt(req.user_id, req.fact_id)
+    except ValueError as exc:
+        return {"error": str(exc)}
+    except Exception:
+        return _outage()
+
+
+@app.get("/memory")
+def memory(user_id: str = "anshu"):
+    try:
+        return tools.recall_memory(user_id)
+    except Exception:
+        return _outage()
+
+
+@app.post("/actions/propose")
+def propose(req: ProposeRequest):
+    """Draft a plan via the agent loop. The loop pauses, nothing executes."""
+    try:
+        out = agent_loop.run_ask(req.goal, req.user_id)
+    except Exception:
+        return _outage()
+    if "error" in out:
+        return _outage()
+    pending = out.get("pending_action", {})
+    return {"action_id": pending.get("action_id"),
+            "plan": pending.get("plan"),
+            "thread_id": out.get("thread_id")}
+
+
+@app.post("/actions/approve")
+def approve(req: ApproveRequest):
+    try:
+        if req.thread_id:
+            out = agent_loop.resume_action(
+                req.thread_id,
+                {"decision": "approved", "by": req.by,
+                 "action_id": req.action_id})
+        else:
+            out = tools.approve_action(req.action_id, req.by)
+            out["audit"] = tools.audit_trail()["entries"]
+        return {"action_id": out["action_id"], "status": out.get("status", "")}
+    except ValueError as exc:
+        return {"error": str(exc)}
+    except Exception:
+        return _outage()
+
+
+@app.post("/actions/reject")
+def reject(req: RejectRequest):
+    try:
+        if req.thread_id:
+            out = agent_loop.resume_action(
+                req.thread_id,
+                {"decision": "rejected", "by": req.by,
+                 "reason": req.reason, "action_id": req.action_id})
+        else:
+            out = tools.reject_action(req.action_id, req.by, req.reason)
+            out["audit"] = tools.audit_trail()["entries"]
+        return {"action_id": out["action_id"], "status": out.get("status", "")}
+    except ValueError as exc:
+        return {"error": str(exc)}
+    except Exception:
+        return _outage()
+
+
+@app.get("/audit")
+def audit():
+    try:
+        return tools.audit_trail()
+    except Exception:
+        return _outage()
