@@ -83,3 +83,23 @@
   /admin/reconnect (simulated outage, same fallback path as a real one),
   /services, /memory/history, edge labels on why-paths, hop depth on blast
   radius, and plan text on audit entries.
+
+## Phase D - eval runner
+
+- eval/questions.json: 30 questions (causal 10, blast 6, ownership 6,
+  temporal 4, memory 4). Realistic questions first, then structured
+  expected evidence (nodes, services, people, phrases, forbidden text).
+  Hard questions kept as-is; nothing tuned per arm.
+- eval/corpus.py renders the shared corpus from the live graph (org plus
+  seed-user current facts; evalprobe excluded as harness scaffolding).
+- eval/run.py: flat RAG (fastembed chunks, top-5, same drafter) vs the
+  product loop, same questions and model. RAG indexes a static snapshot
+  taken BEFORE the eval mutations, modeling a periodically reindexed
+  baseline; the graph arm reads live. Groq calls are spaced 2.1s for the
+  30 req/min free tier. Judge reuses the one Groq path for narration notes.
+- POST /eval/run returns the same summary over HTTP.
+- Fixtures live in the isolated user_evalprobe graph (versioning pair plus
+  two erased facts with receipts), never touching demo users.
+- Mock mode (no key) measures retrieval plus template only and prints that
+  its numbers are plumbing checks, not a benchmark. Full mock: graph
+  29.167, rag 24.334. Live numbers await a keyed run.
