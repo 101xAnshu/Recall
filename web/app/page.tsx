@@ -37,6 +37,7 @@ export default function Home() {
   const [nav, setNav] = useState<NavId>("ask");
   const [user, setUser] = useState("anshu");
   const [health, setHealth] = useState<"ok" | "down">("ok");
+  const [toggling, setToggling] = useState(false);
   const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
   const toggleSidebarCollapsed = useUiStore((state) => state.toggleSidebarCollapsed);
 
@@ -99,6 +100,30 @@ export default function Home() {
               <h1 className="min-w-0 truncate">{TITLES[nav]}</h1>
             </nav>
             <div className="flex shrink-0 items-center gap-2">
+              <Button
+                variant="ghost"
+                size="sm"
+                disabled={toggling}
+                title="Demo control: simulate a FalkorDB outage and recovery"
+                onClick={async () => {
+                  setToggling(true);
+                  try {
+                    await api(
+                      health === "ok" ? "/admin/disconnect" : "/admin/reconnect",
+                      { method: "POST" }
+                    );
+                    const h = await api<{ falkordb: "ok" | "down" }>("/health");
+                    setHealth(h.falkordb);
+                  } catch {
+                    setHealth("down");
+                  } finally {
+                    setToggling(false);
+                  }
+                }}
+                className="hidden sm:inline-flex"
+              >
+                {health === "ok" ? "Demo: disconnect FalkorDB" : "Demo: reconnect FalkorDB"}
+              </Button>
               <span
                 className={cn(
                   "shadow-ring hidden items-center gap-1.5 rounded-full bg-white px-3 py-1.5 font-mono text-[12px] sm:inline-flex",
