@@ -62,6 +62,7 @@ export type AskResp = {
   expertsBlock?: Expert[];
   messagesBlock?: MessageBlock[];
   blastBlock?: BlastBlock[];
+  blastService?: string;
   error?: string;
   action_id?: string;
   plan?: string[];
@@ -197,6 +198,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     const expertsBlock: Expert[] = [];
     const messagesBlock: MessageBlock[] = [];
     const blastBlock: BlastBlock[] = [];
+    let blastService = "";
     if (Array.isArray(r.evidence))
       for (const e of r.evidence as Record<string, unknown>[]) {
         if (typeof e !== "object" || e === null) continue;
@@ -215,7 +217,8 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
               },
               latest: typeof x.latest === "string" ? x.latest : null,
             });
-        if (Array.isArray(e.affected))
+        if (Array.isArray(e.affected)) {
+          if (typeof e.service === "string" && e.service) blastService = e.service;
           for (const r of e.affected as Record<string, unknown>[]) {
             const service = String(r.affected || r.service || "");
             if (!service) continue;
@@ -226,6 +229,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
               hops: Number.isFinite(hops) ? hops : null,
             });
           }
+        }
         if (Array.isArray(e.messages))
           for (const m of e.messages as Record<string, unknown>[]) {
             const text = String(m.text || "");
@@ -248,6 +252,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
       expertsBlock,
       messagesBlock,
       blastBlock,
+      blastService,
     } as T;
   }
 

@@ -168,6 +168,11 @@ export default function AskScreen({ user }: { user: string }) {
                 )}
                 {(resp.blastBlock || []).length > 0 && (
                   <div className="flex flex-col gap-2.5 border-t border-hairline pt-4">
+                    <p className="text-sm">
+                      Changing {resp.blastService || "this service"} affects{" "}
+                      {(resp.blastBlock || []).length} service
+                      {(resp.blastBlock || []).length === 1 ? "" : "s"}:
+                    </p>
                     {(resp.blastBlock || []).map((b) => (
                       <div
                         key={b.service}
