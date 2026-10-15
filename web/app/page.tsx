@@ -198,10 +198,10 @@ export default function Home() {
                   className="flex min-h-full w-full flex-col gap-3.5"
                 >
               {nav === "ask" && <AskScreen user={user} graphDown={health === "down"} />}
-              {nav === "blast" && <BlastScreen />}
-              {nav === "who" && <WhoKnowsScreen />}
-              {nav === "approvals" && <ApprovalsScreen user={user} />}
-              {nav === "memory" && <MemoryScreen user={user} />}
+              {nav === "blast" && <BlastScreen graphDown={health === "down"} />}
+              {nav === "who" && <WhoKnowsScreen graphDown={health === "down"} />}
+              {nav === "approvals" && <ApprovalsScreen user={user} graphDown={health === "down"} />}
+              {nav === "memory" && <MemoryScreen user={user} graphDown={health === "down"} />}
               </motion.div>
               </AnimatePresence>
             </div>
