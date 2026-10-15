@@ -148,7 +148,7 @@ export default function Home() {
                     className="rounded-none px-3 capitalize"
                   >
                     <UserHIcon aria-hidden className="size-3.5" />
-                    {u}
+                    {u === "anshu" ? "Anshu" : "Priya"}
                   </Button>
                 ))}
               </div>
@@ -168,7 +168,7 @@ export default function Home() {
                   onClick={() => setUser(u)}
                   className="rounded-none px-3 capitalize"
                 >
-                  {u}
+                  {u === "anshu" ? "Anshu" : "Priya"}
                 </Button>
               ))}
             </div>

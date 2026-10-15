@@ -19,7 +19,7 @@ const interDisplay = Inter({
 });
 
 export const metadata: Metadata = {
-  title: "Meridian Pay: The Company That Remembers",
+  title: "Recall - Meridian Pay",
   description:
     "An institutional-memory agent: traced answers, blast radius, expertise, memory and approvals.",
 };

@@ -88,7 +88,7 @@ export function SidebarContent({
           <>
             <Logo
               role="img"
-              aria-label="Meridian"
+              aria-label="Meridian Pay"
               className="absolute top-4 left-4 size-[30px]"
             />
             <Button
@@ -113,7 +113,7 @@ export function SidebarContent({
             sidebarFade
           )}
         >
-          Meridian
+          Meridian Pay
         </span>
       </div>
 

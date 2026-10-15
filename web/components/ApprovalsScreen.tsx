@@ -142,7 +142,7 @@ export default function ApprovalsScreen({
                     <div className="text-subtle flex flex-wrap items-center gap-x-2 gap-y-1">
                       <span className="whitespace-nowrap font-mono text-[12px]">{a.id}</span>
                       <span aria-hidden className="size-[3px] rounded-full bg-[#d9d9d9]" />
-                      <span className="whitespace-nowrap text-warning">paused for approval</span>
+                      <span className="whitespace-nowrap text-warning">Waiting for approval</span>
                     </div>
                   </CardBody>
                   <div className="border-card-border border-t px-4 py-2">

@@ -130,7 +130,7 @@ export default function MemoryScreen({
                 value={text}
                 onChange={(e) => setText(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && remember()}
-                placeholder={`Remember something for ${user}…`}
+                placeholder={`Remember something for ${user === "anshu" ? "Anshu" : "Priya"}…`}
                 aria-label="New memory"
                 className="pr-3 pl-9"
               />
@@ -182,7 +182,7 @@ export default function MemoryScreen({
         <CardBody className="gap-2">
           <div className="flex items-start gap-1.5">
             <UserHIcon aria-hidden className="text-info mt-[2px] size-3.5 shrink-0" />
-            <h3 className="min-w-0 flex-1 capitalize">{user}’s memory</h3>
+            <h3 className="min-w-0 flex-1 capitalize">{user === "anshu" ? "Anshu" : "Priya"}’s memory</h3>
           </div>
           <div className="text-subtle flex flex-wrap items-center gap-x-2 gap-y-1">
             <span className="whitespace-nowrap font-mono text-[12px]">user_{user}</span>
@@ -240,7 +240,7 @@ export default function MemoryScreen({
               {visible.length === 0 && (
                 <div className="border-border bg-secondary flex h-[130px] flex-col items-center justify-center gap-2 rounded-2xl border border-dashed">
                   <span className="text-subtle">No facts here yet</span>
-                  <p className="text-subtle">Remember something for {user} above.</p>
+                  <p className="text-subtle">Remember something for {user === "anshu" ? "Anshu" : "Priya"} above.</p>
                 </div>
               )}
             </>
