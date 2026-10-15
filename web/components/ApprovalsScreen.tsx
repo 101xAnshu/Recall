@@ -20,12 +20,19 @@ type Entry = {
   executed_at?: string | null;
 };
 
-export default function ApprovalsScreen({ user }: { user: string }) {
+export default function ApprovalsScreen({
+  user,
+  graphDown = false,
+}: {
+  user: string;
+  graphDown?: boolean;
+}) {
   const [goal, setGoal] = useState("Migrate Retry to the new queue");
   const [entries, setEntries] = useState<Entry[]>([]);
   const [reason, setReason] = useState("");
   const [booted, setBooted] = useState(false);
   const [acting, setActing] = useState<string | null>(null);
+  const [notice, setNotice] = useState("");
   const reqId = useRef(0);
 
   const refresh = async () => {
@@ -45,15 +52,29 @@ export default function ApprovalsScreen({ user }: { user: string }) {
     refresh();
   }, []);
 
+  const failNotice = (err: unknown) =>
+    graphDown
+      ? "FalkorDB is disconnected, this change was not saved."
+      : String((err as Error)?.message || err || "Request failed.");
+
   const propose = async () => {
     if (!goal.trim()) return;
-    await api("/actions/propose", { method: "POST", body: JSON.stringify({ goal }) });
+    setNotice("");
+    try {
+      await api("/actions/propose", { method: "POST", body: JSON.stringify({ goal }) });
+    } catch (err) {
+      setNotice(failNotice(err));
+      return;
+    }
     refresh();
   };
   const act = async (actionId: string, path: string, body: object) => {
     setActing(actionId);
+    setNotice("");
     try {
       await api(path, { method: "POST", body: JSON.stringify(body) });
+    } catch (err) {
+      setNotice(failNotice(err));
     } finally {
       setActing(null);
     }
@@ -82,10 +103,24 @@ export default function ApprovalsScreen({ user }: { user: string }) {
         </CardBody>
       </Card>
 
+      {notice && (
+        <div className="rounded-2xl border border-hairline bg-white p-4 shadow-card">
+          <p className="text-sm">{notice}</p>
+        </div>
+      )}
+      {graphDown && (
+        <div className="rounded-2xl border border-hairline bg-white p-5 shadow-card">
+          <div className="text-sm font-medium">FalkorDB is disconnected</div>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Actions and history are unavailable until you reconnect.
+          </p>
+        </div>
+      )}
+
       <div aria-live="polite" className="flex min-h-[200px] flex-col gap-3.5">
         {!booted ? (
           <RowsSkeleton rows={2} />
-        ) : (
+        ) : graphDown ? null : (
           <>
             {pending.length === 0 && (
               <Card>
@@ -156,6 +191,7 @@ export default function ApprovalsScreen({ user }: { user: string }) {
         )}
       </div>
 
+      {!graphDown && (
       <Card>
         <CardBody className="gap-4">
           <div className="flex items-center justify-between gap-2">
@@ -241,6 +277,7 @@ export default function ApprovalsScreen({ user }: { user: string }) {
           </div>
         </CardBody>
       </Card>
+      )}
     </>
   );
 }

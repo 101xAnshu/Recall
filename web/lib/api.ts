@@ -311,18 +311,32 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   }
   if (path === "/actions/propose" && method === "POST") {
     const r = await call(path, method, { goal: body.goal });
-    return { id: String(r.action_id || "") } as T;
+    if (r && typeof r === "object" && (r as Record<string, unknown>).error)
+      throw new Error(String((r as Record<string, unknown>).error));
+    if (!(r as Record<string, unknown>).action_id)
+      throw new Error("Proposal failed: no action was created.");
+    return { id: String((r as Record<string, unknown>).action_id || "") } as T;
   }
   if (path === "/actions/approve" && method === "POST") {
-    await call(path, method, { action_id: body.action_id, by: body.user_id });
+    const r = await call(path, method, { action_id: body.action_id, by: body.user_id });
+    if (r && typeof r === "object" && (r as Record<string, unknown>).error)
+      throw new Error(String((r as Record<string, unknown>).error));
     return { ok: true } as T;
   }
   if (path === "/actions/reject" && method === "POST") {
-    await call(path, method, {
+    const r = await call(path, method, {
       action_id: body.action_id,
       by: body.user_id,
       reason: body.reason || "",
     });
+    if (r && typeof r === "object" && (r as Record<string, unknown>).error)
+      throw new Error(String((r as Record<string, unknown>).error));
+    return { ok: true } as T;
+  }
+  if (path === "/actions/execute" && method === "POST") {
+    const r = await call(path, method, { action_id: body.action_id });
+    if (r && typeof r === "object" && (r as Record<string, unknown>).error)
+      throw new Error(String((r as Record<string, unknown>).error));
     return { ok: true } as T;
   }
 
@@ -354,14 +368,20 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
       text: body.text,
       salience: 0.8,
     });
+    if (r && typeof r === "object" && (r as Record<string, unknown>).error)
+      throw new Error(String((r as Record<string, unknown>).error));
     return { id: String(r.fact_id || "") } as T;
   }
   if (path === "/memory/supersede" && method === "POST") {
     const r = await call(path, method, body);
+    if (r && typeof r === "object" && (r as Record<string, unknown>).error)
+      throw new Error(String((r as Record<string, unknown>).error));
     return { id: String(r.new_id || "") } as T;
   }
   if (path === "/memory/forget" && method === "POST") {
     const r = await call(path, method, body);
+    if (r && typeof r === "object" && (r as Record<string, unknown>).error)
+      throw new Error(String((r as Record<string, unknown>).error));
     return { receipt_id: String(r.receipt_id || "") } as T;
   }
 
