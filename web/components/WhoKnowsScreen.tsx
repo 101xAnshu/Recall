@@ -68,6 +68,7 @@ export default function WhoKnowsScreen() {
                 value={topic}
                 onChange={(e) => setTopic(e.target.value)}
                 onKeyDown={(e) => e.key === "Enter" && run()}
+                placeholder="Topic, e.g. payout-retry"
                 aria-label="Topic"
                 className="pr-3 pl-9"
               />
@@ -115,15 +116,15 @@ export default function WhoKnowsScreen() {
               <div className="flex flex-col gap-3">
                 {(
                   [
-                    ["worked_on", 1.0, "text-subtle"],
-                    ["authored", 1.5, "text-info"],
-                    ["resolved", 2.0, "text-success"],
+                    ["worked_on", "Worked on", 1.0, "text-subtle"],
+                    ["authored", "Authored", 1.5, "text-info"],
+                    ["resolved", "Resolved", 2.0, "text-success"],
                   ] as const
-                ).map(([k, w, tone]) => (
+                ).map(([k, label, w, tone]) => (
                   <div key={k} className="flex items-center gap-3">
                     <UserHIcon aria-hidden className={cn("size-3.5 shrink-0", tone)} />
                     <span className="w-24">
-                      {k} ×{w}
+                      {label} ×{w}
                     </span>
                     <Bar
                       value={top.breakdown[k]}
