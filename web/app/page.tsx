@@ -1,7 +1,7 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
 import { AnimatePresence, motion } from "motion/react";
-import { api } from "../lib/mock-api";
+import { api } from "../lib/api";
 import Sidebar, { NAV } from "../components/sidebar";
 import Button from "../components/_ui/button";
 import AskScreen from "../components/AskScreen";
