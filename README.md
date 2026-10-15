@@ -57,22 +57,58 @@ No keys ship in the repo. `.env.example` holds placeholders only.
 
 ## Architecture
 
-```
-Next.js UI (:3000) ---- REST ---- FastAPI backend (:8000)
-                                         |
-                              LangGraph agent loop
-                              scope -> retrieve -> draft
-                                 |                    |
-                          plain question        action intent
-                                 |                    |
-                              respond      plan -> APPROVAL GATE (interrupt,
-                                           agent STOPS) -> execute -> audit
-                                         |
-                              FalkorDB tools on EVERY step
-                              (one graph per query, merged in Python)
-                                         |
-                              FalkorDB :6379 (graphs: org, user_anshu,
-                              user_priya; eval fixtures in user_evalprobe)
+```mermaid
+flowchart TD
+    subgraph Client["Client"]
+        UI["Next.js UI<br/>port 3000"]
+    end
+
+    subgraph Backend["Backend"]
+        API["FastAPI<br/>port 8000"]
+        subgraph Agent["LangGraph agent loop"]
+            direction LR
+            SCOPE["scope"] --> RETRIEVE["retrieve"] --> DRAFT["draft"]
+        end
+        INTENT{"intent?"}
+        RESPOND["respond"]
+        PLAN["plan"]
+        GATE["APPROVAL GATE<br/>interrupt: agent STOPS"]
+        EXEC["execute"]
+        AUDIT["audit"]
+    end
+
+    subgraph Data["Data layer"]
+        TOOLS["FalkorDB tools<br/>on every step"]
+        DB[("FalkorDB :6379<br/>org · user_anshu · user_priya")]
+    end
+
+    UI -- "REST" --> API
+    API --> SCOPE
+    DRAFT --> INTENT
+    INTENT -- "plain question" --> RESPOND
+    INTENT -- "action intent" --> PLAN --> GATE
+    GATE -- "approved" --> EXEC --> AUDIT
+    RETRIEVE <-.-> TOOLS
+    DRAFT <-.-> TOOLS
+    EXEC <-.-> TOOLS
+    TOOLS --> DB
+
+    classDef client fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
+    classDef server fill:#ede9fe,stroke:#7c3aed,stroke-width:2px,color:#4c1d95
+    classDef step fill:#e0e7ff,stroke:#4f46e5,stroke-width:1.5px,color:#312e81
+    classDef gate fill:#fee2e2,stroke:#dc2626,stroke-width:2.5px,color:#991b1b
+    classDef data fill:#dcfce7,stroke:#16a34a,stroke-width:2px,color:#14532d
+    classDef decision fill:#fef3c7,stroke:#d97706,stroke-width:2px,color:#92400e
+
+    class UI client
+    class API server
+    class SCOPE,RETRIEVE,DRAFT,PLAN,EXEC,AUDIT,RESPOND step
+    class GATE gate
+    class TOOLS,DB data
+    class INTENT decision
+
+    linkStyle 0,1,2,3,4,5,6,7,8,9,10,11 stroke:#d1d5db,stroke-width:2px
+
 ```
 
 The agent classifies scope (org-only, user-only, or both), runs
@@ -90,37 +126,37 @@ holds one employee's memory. The app layer resolves scope.
 
 Node labels (every node carries `source_type` plus `source_ref`):
 
-| Label | Key properties |
-|---|---|
-| `Person` | `id`, `name`, `team`, `at` |
-| `Team` | `id`, `name`, `at` |
-| `Service` | `id`, `name`, `owner_team`, `at` |
-| `Incident` | `id`, `title`, `at`, `severity` |
-| `ADR` | `id`, `title`, `at` |
-| `Commit` | `id`, `message`, `sha`, `at` |
-| `PR` | `id`, `title`, `at` |
-| `Message` | `id`, `text`, `at`, `author` |
-| `Topic` | `name` |
-| `MemoryFact` | `id`, `text`, `salience`, `at`, `valid_until` (null means current), `superseded_by` |
-| `Action` | `id`, `goal`, `plan` (JSON), `status` (proposed, approved, rejected), `at` |
-| `ErasureReceipt` | `id` (for example `ERASURE-9f3c2a`), `fact_ref`, `text`, `at`, `scope` |
+| Label            | Key properties                                                                      |
+| ---------------- | ----------------------------------------------------------------------------------- |
+| `Person`         | `id`, `name`, `team`, `at`                                                          |
+| `Team`           | `id`, `name`, `at`                                                                  |
+| `Service`        | `id`, `name`, `owner_team`, `at`                                                    |
+| `Incident`       | `id`, `title`, `at`, `severity`                                                     |
+| `ADR`            | `id`, `title`, `at`                                                                 |
+| `Commit`         | `id`, `message`, `sha`, `at`                                                        |
+| `PR`             | `id`, `title`, `at`                                                                 |
+| `Message`        | `id`, `text`, `at`, `author`                                                        |
+| `Topic`          | `name`                                                                              |
+| `MemoryFact`     | `id`, `text`, `salience`, `at`, `valid_until` (null means current), `superseded_by` |
+| `Action`         | `id`, `goal`, `plan` (JSON), `status` (proposed, approved, rejected, executed), `at`, `executed_at` |
+| `ErasureReceipt` | `id` (for example `ERASURE-9f3c2a`), `fact_ref`, `text`, `at`, `scope`              |
 
 Edge types and locked directions:
 
-| Edge | Direction | Meaning |
-|---|---|---|
-| `DEPENDS_ON` | `(consumer)-[:DEPENDS_ON]->(provider)` | service dependency |
-| `OWNS` | `(Team)-[:OWNS]->(Service)` | ownership |
-| `WORKS_ON` | `(Person)-[:WORKS_ON]->(Service)` | staffing |
-| `AUTHORED` | `(Person)-[:AUTHORED]->(ADR)` | authorship |
-| `RESOLVED_BY` | `(Incident)-[:RESOLVED_BY]->(Person)` | who fixed it |
-| `CAUSED_BY` | `(Incident)-[:CAUSED_BY]->(PR)` | causality |
-| `DECIDED_IN` | `(PR)-[:DECIDED_IN]->(ADR)` | decision provenance |
-| `CITED_IN` | `(ADR)-[:CITED_IN]->(Commit)` | evidence link |
-| `MENTIONS` | `(anything)-[:MENTIONS]->(Topic)` | topic tagging |
-| `REMEMBERS` | `(Person)-[:REMEMBERS]->(MemoryFact)` | per-user memory |
-| `SUPERSEDES` | `(new MemoryFact)-[:SUPERSEDES]->(old MemoryFact)` | versioning |
-| `APPROVED_BY` / `REJECTED_BY` | `(Action)-[:APPROVED_BY]->(Person)` | audit trail |
+| Edge                          | Direction                                          | Meaning             |
+| ----------------------------- | -------------------------------------------------- | ------------------- |
+| `DEPENDS_ON`                  | `(consumer)-[:DEPENDS_ON]->(provider)`             | service dependency  |
+| `OWNS`                        | `(Team)-[:OWNS]->(Service)`                        | ownership           |
+| `WORKS_ON`                    | `(Person)-[:WORKS_ON]->(Service)`                  | staffing            |
+| `AUTHORED`                    | `(Person)-[:AUTHORED]->(ADR)`                      | authorship          |
+| `RESOLVED_BY`                 | `(Incident)-[:RESOLVED_BY]->(Person)`              | who fixed it        |
+| `CAUSED_BY`                   | `(Incident)-[:CAUSED_BY]->(PR)`                    | causality           |
+| `DECIDED_IN`                  | `(PR)-[:DECIDED_IN]->(ADR)`                        | decision provenance |
+| `CITED_IN`                    | `(ADR)-[:CITED_IN]->(Commit)`                      | evidence link       |
+| `MENTIONS`                    | `(anything)-[:MENTIONS]->(Topic)`                  | topic tagging       |
+| `REMEMBERS`                   | `(Person)-[:REMEMBERS]->(MemoryFact)`              | per-user memory     |
+| `SUPERSEDES`                  | `(new MemoryFact)-[:SUPERSEDES]->(old MemoryFact)` | versioning          |
+| `APPROVED_BY` / `REJECTED_BY` | `(Action)-[:APPROVED_BY]->(Person)`                | audit trail         |
 
 Memory has three states: current (`valid_until IS NULL`, the only state
 ever answered from), superseded (kept as history, never current), erased
@@ -146,11 +182,11 @@ MATCH p = (i:Incident {id: $incident_id})-[:CAUSED_BY|RESOLVED_BY|DECIDED_IN|CIT
 RETURN [x IN nodes(p) | labels(x)[0] + ': ' + coalesce(x.title, x.name, x.message, x.id)] AS trace,
        [r IN relationships(p) | type(r)] AS edges,
        length(p) AS hops
-ORDER BY hops LIMIT 5
+ORDER BY hops DESC LIMIT 5
 ```
 
 2. Blast radius (dependents via incoming `DEPENDS_ON`; the `CALL UNION`
-shape is required because FalkorDB cannot `UNWIND` concatenated lists):
+   shape is required because FalkorDB cannot `UNWIND` concatenated lists):
 
 ```cypher
 MATCH (s:Service {name: $service})
@@ -169,7 +205,7 @@ ORDER BY affected
 ```
 
 3. Who-knows (weighted expertise; `(p:Person)` binds before any
-`OPTIONAL MATCH`; weights works_on 1.0, authored 1.5, resolved 2.0):
+   `OPTIONAL MATCH`; weights works_on 1.0, authored 1.5, resolved 2.0):
 
 ```cypher
 MATCH (t:Topic {name: $topic})
@@ -219,7 +255,9 @@ back.
 The exact fallback message:
 
 ```json
-{"error": "I can't answer this. The relationships required for the answer don't exist in the fallback."}
+{
+  "error": "I can't answer this. The relationships required for the answer don't exist in the fallback."
+}
 ```
 
 ## Eval results
@@ -232,14 +270,14 @@ evidence. An LLM judge notes narration quality only.
 
 Final live run (Groq `openai/gpt-oss-120b` for both arms, n=30):
 
-| Category | n | Graph | Flat RAG |
-|---|---|---|---|
-| Causal why | 10 | 8.667 | 8.417 |
-| Blast radius | 6 | 5.0 | 3.334 |
-| Ownership | 6 | 5.0 | 4.5 |
-| Temporal | 4 | 4.0 | 2.0 |
-| Memory | 4 | 2.0 | 1.0 |
-| **Total** | **30** | **24.667** | **19.251** |
+| Category     | n      | Graph      | Flat RAG   |
+| ------------ | ------ | ---------- | ---------- |
+| Causal why   | 10     | 8.667      | 8.417      |
+| Blast radius | 6      | 5.0        | 3.334      |
+| Ownership    | 6      | 5.0        | 4.5        |
+| Temporal     | 4      | 4.0        | 2.0        |
+| Memory       | 4      | 2.0        | 1.0        |
+| **Total**    | **30** | **24.667** | **19.251** |
 
 Methodology, disclosed fully: same corpus source, same LLM, same
 questions, same expected-evidence definitions for both arms. The RAG index
@@ -266,7 +304,7 @@ committed anywhere; `GROQ_API_KEY` comes from the environment only.
 Base `http://localhost:8000`. `POST /ask` runs the agent loop.
 `GET /blast-radius`, `GET /who-knows`, memory endpoints
 (`remember`, `supersede`, `forget`, `memory`, `memory/history`), action
-endpoints (`propose`, `approve`, `reject`, `audit`), `GET /health`,
+endpoints (`propose`, `approve`, `reject`, `execute`, `audit`), `GET /health`,
 `POST /eval/run`, and the demo-only `/admin/disconnect` and
 `/admin/reconnect`.
 
