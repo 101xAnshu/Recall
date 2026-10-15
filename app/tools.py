@@ -347,8 +347,64 @@ def audit_trail(limit=20):
         "OPTIONAL MATCH (a)-[r:APPROVED_BY|REJECTED_BY]->(p:Person) "
         "RETURN a.id AS action_id, a.goal AS goal, a.plan AS plan, "
         "a.status AS status, a.reason AS reason, "
-        "a.at AS at, type(r) AS decision, p.name AS decided_by "
+        "a.at AS at, a.executed_at AS executed_at, "
+        "type(r) AS decision, p.name AS decided_by "
         "ORDER BY a.at DESC LIMIT $limit",
         {"limit": limit},
     )
     return {"entries": rows}
+
+
+def get_action(action_id):
+    """Read one proposal node from the graph. The graph is the record."""
+    rows = _rows(
+        _org(),
+        "MATCH (a:Action {id: $aid}) "
+        "OPTIONAL MATCH (a)-[r:APPROVED_BY|REJECTED_BY]->(p:Person) "
+        "RETURN a.id AS action_id, a.goal AS goal, a.plan AS plan, "
+        "a.status AS status, a.at AS at, a.executed_at AS executed_at, "
+        "type(r) AS decision, p.name AS decided_by",
+        {"aid": action_id},
+    )
+    if not rows:
+        raise ValueError(f"unknown action {action_id}")
+    row = rows[0]
+    try:
+        plan = json.loads(row["plan"]) if row["plan"] else []
+    except (TypeError, ValueError):
+        plan = []
+    return {
+        "action_id": row["action_id"],
+        "goal": row["goal"],
+        "plan": plan if isinstance(plan, list) else [str(plan)],
+        "status": row["status"],
+        "at": row["at"],
+        "executed_at": row["executed_at"],
+        "decision": row["decision"],
+        "decided_by": row["decided_by"],
+    }
+
+
+def execute_action(action_id):
+    """Execute an approved proposal read from the graph, nothing else.
+
+    Refuses anything not approved, and refuses twice-execution. The node
+    carries status to executed with the pickup timestamp as proof.
+    """
+    current = get_action(action_id)
+    if current["status"] == "executed":
+        raise ValueError(f"action {action_id} already executed")
+    if current["status"] != "approved":
+        raise ValueError(
+            f"action {action_id} is {current['status']}, not approved; "
+            "refusing to execute")
+    stamped = datetime.now().isoformat(timespec="seconds")
+    _org().query(
+        "MATCH (a:Action {id: $aid}) WHERE a.status = 'approved' "
+        "SET a.status = 'executed', a.executed_at = $at "
+        "RETURN a.id AS action_id",
+        {"aid": action_id, "at": stamped},
+    )
+    done = get_action(action_id)
+    done["picked_up_at"] = stamped
+    return done

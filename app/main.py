@@ -74,6 +74,10 @@ class EvalRequest(BaseModel):
     judge: bool = True
 
 
+class ExecuteRequest(BaseModel):
+    action_id: str
+
+
 def _outage():
     return FALLBACK
 
@@ -216,6 +220,21 @@ def reject(req: RejectRequest):
 def audit():
     try:
         return tools.audit_trail()
+    except Exception:
+        return _outage()
+
+
+@app.post("/actions/execute")
+def execute(req: ExecuteRequest):
+    """Run the executor against the graph proposal. Takes only an id;
+    goal, plan, and status are read from FalkorDB at execution time."""
+    try:
+        out = tools.execute_action(req.action_id)
+        return {"action_id": out["action_id"], "status": out["status"],
+                "plan": out["plan"],
+                "picked_up_at": out.get("picked_up_at", "")}
+    except ValueError as exc:
+        return {"error": str(exc)}
     except Exception:
         return _outage()
 

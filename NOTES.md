@@ -103,3 +103,16 @@
 - Mock mode (no key) measures retrieval plus template only and prints that
   its numbers are plumbing checks, not a benchmark. Full mock: graph
   29.167, rag 24.334. Live numbers await a keyed run.
+
+## Handoff note (spec reading, no amendment needed for types)
+
+- The 04 Action node already fits proposals: goal, plan JSON, status,
+  plus provenance. No ActionProposal type was added.
+- One minimal status extension was taken: executed, with an executed_at
+  pickup timestamp, since 04 enumerates only proposed, approved, and
+  rejected, and an executed action must be distinguishable from a merely
+  approved one. The task's pending maps to 04's proposed; the UI shows
+  real graph values.
+- The executor takes only an action id and reads goal, plan, and status
+  from FalkorDB at execution time. No proposal data travels in LangGraph
+  state, so the handoff survives a backend restart.

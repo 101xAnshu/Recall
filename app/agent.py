@@ -308,22 +308,33 @@ def plan_drafter(state):
     plan.append(f"Apply change to {service}")
     plan.append("Verify all affected services report healthy")
     res = tools.propose_action(goal, plan)
-    return {"goal": goal, "plan": plan, "action_id": res["action_id"]}
+    return {"action_id": res["action_id"]}
 
 
 def approval_gate(state):
-    """The agent STOPS here and waits for a human decision."""
-    decision = interrupt({"action_id": state.get("action_id"),
-                          "goal": state.get("goal"),
-                          "plan": state.get("plan")})
+    """The agent STOPS here and waits for a human decision.
+
+    Only the action id crosses the gate. Everything the executor needs
+    lives on the proposal node in FalkorDB, never in loop state.
+    """
+    decision = interrupt({"action_id": state.get("action_id")})
     return {"decision": decision}
 
 
 def executor(state):
-    """Run the approved plan and write the APPROVED_BY edge."""
+    """Execute the approved proposal read from the graph.
+
+    The action id is only a lookup key. Goal, plan, and status are read
+    from FalkorDB at execution time, so this survives a process restart.
+    """
     decision = state.get("decision", {}) or {}
-    res = tools.approve_action(state["action_id"], decision.get("by", "anshu"))
-    return {"decision": {**decision, "status": res["status"]}}
+    action_id = state["action_id"]
+    current = tools.get_action(action_id)
+    if current["status"] == "proposed":
+        tools.approve_action(action_id, decision.get("by", "anshu"))
+    done = tools.execute_action(action_id)
+    return {"decision": {**decision, "status": done["status"],
+                         "executed_at": done.get("executed_at")}}
 
 
 def record_rejection(state):
@@ -383,9 +394,16 @@ def run_ask(question, user_id, thread_id=None):
     paused = res.get("__interrupt__")
     if paused:
         payload = paused[0].value
-        return {"pending_action": payload, "thread_id": thread_id,
+        try:
+            node = tools.get_action(payload.get("action_id", ""))
+        except Exception:
+            return dict(FALLBACK_ERROR, thread_id=thread_id)
+        return {"pending_action": {"action_id": node["action_id"],
+                                   "goal": node["goal"],
+                                   "plan": node["plan"]},
+                "thread_id": thread_id,
                 "answer": "This needs approval before anything runs. "
-                          f"Plan drafted for: {payload.get('goal')}"}
+                          f"Plan drafted for: {node['goal']}"}
     if not res.get("answer") and not res.get("evidence"):
         return dict(FALLBACK_ERROR, thread_id=thread_id)
     return {"answer": res.get("answer", ""), "trace": res.get("trace", []),
