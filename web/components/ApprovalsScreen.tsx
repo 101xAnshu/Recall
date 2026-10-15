@@ -18,6 +18,7 @@ type Entry = {
   reason?: string | null;
   decided_at?: string | null;
   executed_at?: string | null;
+  proposed_by?: string | null;
 };
 
 export default function ApprovalsScreen({
@@ -141,6 +142,12 @@ export default function ApprovalsScreen({
                     </div>
                     <div className="text-subtle flex flex-wrap items-center gap-x-2 gap-y-1">
                       <span className="whitespace-nowrap font-mono text-[12px]">{a.id}</span>
+                      {a.proposed_by && (
+                        <>
+                          <span aria-hidden className="size-[3px] rounded-full bg-[#d9d9d9]" />
+                          <span className="whitespace-nowrap">by {a.proposed_by}</span>
+                        </>
+                      )}
                       <span aria-hidden className="size-[3px] rounded-full bg-[#d9d9d9]" />
                       <span className="whitespace-nowrap text-warning">Waiting for approval</span>
                     </div>
@@ -247,6 +254,9 @@ export default function ApprovalsScreen({
                         {e.id}
                         {e.by ? ` · by ${e.by}` : ""}
                         {e.decided_at ? ` · ${e.decided_at}` : ""}
+                        {e.proposed_by && e.proposed_by !== e.by
+                          ? ` · proposed by ${e.proposed_by}`
+                          : ""}
                         {e.status === "executed" && e.executed_at
                           ? ` · picked up from graph at ${e.executed_at}`
                           : ""}

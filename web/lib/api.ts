@@ -306,6 +306,8 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
         decided_at: String(e.at || ""),
         executed_at:
           typeof e.executed_at === "string" ? e.executed_at : null,
+        proposed_by:
+          typeof e.proposed_by === "string" ? e.proposed_by : null,
       })),
     } as T;
   }
