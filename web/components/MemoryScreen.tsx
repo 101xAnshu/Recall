@@ -19,13 +19,20 @@ type Fact = {
   source_ref?: string;
 };
 
-export default function MemoryScreen({ user }: { user: string }) {
+export default function MemoryScreen({
+  user,
+  graphDown = false,
+}: {
+  user: string;
+  graphDown?: boolean;
+}) {
   const [facts, setFacts] = useState<Fact[]>([]);
   const [history, setHistory] = useState(false);
   const [text, setText] = useState("");
   const [receipt, setReceipt] = useState<string | null>(null);
   const [booted, setBooted] = useState(false);
   const [busy, setBusy] = useState(false);
+  const [notice, setNotice] = useState("");
   const [supersedeTarget, setSupersedeTarget] = useState<Fact | null>(null);
   const reqId = useRef(0);
 
@@ -48,13 +55,21 @@ export default function MemoryScreen({ user }: { user: string }) {
     refresh(history);
   }, [user, history]);
 
+  const failNotice = (err: unknown) =>
+    graphDown
+      ? "FalkorDB is disconnected, this change was not saved."
+      : String((err as Error)?.message || err || "Request failed.");
+
   const remember = async () => {
     if (!text.trim() || busy) return;
     setBusy(true);
+    setNotice("");
     try {
       await api("/memory/remember", { method: "POST", body: JSON.stringify({ user_id: user, text }) });
       setText("");
       await refresh(history);
+    } catch (err) {
+      setNotice(failNotice(err));
     } finally {
       setBusy(false);
     }
@@ -67,6 +82,7 @@ export default function MemoryScreen({ user }: { user: string }) {
     const f = supersedeTarget;
     if (!f || !newText.trim() || busy) return;
     setBusy(true);
+    setNotice("");
     try {
       await api("/memory/supersede", {
         method: "POST",
@@ -74,6 +90,8 @@ export default function MemoryScreen({ user }: { user: string }) {
       });
       setSupersedeTarget(null);
       await refresh(history);
+    } catch (err) {
+      setNotice(failNotice(err));
     } finally {
       setBusy(false);
     }
@@ -81,6 +99,7 @@ export default function MemoryScreen({ user }: { user: string }) {
   const forget = async (f: Fact) => {
     if (busy) return;
     setBusy(true);
+    setNotice("");
     try {
       const r = await api<{ receipt_id: string }>("/memory/forget", {
         method: "POST",
@@ -88,6 +107,8 @@ export default function MemoryScreen({ user }: { user: string }) {
       });
       setReceipt(r.receipt_id);
       await refresh(history);
+    } catch (err) {
+      setNotice(failNotice(err));
     } finally {
       setBusy(false);
     }
@@ -143,6 +164,20 @@ export default function MemoryScreen({ user }: { user: string }) {
         </CardFooter>
       </Card>
 
+      {notice && (
+        <div className="rounded-2xl border border-hairline bg-white p-4 shadow-card">
+          <p className="text-sm">{notice}</p>
+        </div>
+      )}
+      {graphDown && (
+        <div className="rounded-2xl border border-hairline bg-white p-5 shadow-card">
+          <div className="text-sm font-medium">FalkorDB is disconnected</div>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Memory is unavailable until you reconnect.
+          </p>
+        </div>
+      )}
+      {!graphDown && (
       <Card>
         <CardBody className="gap-2">
           <div className="flex items-start gap-1.5">
@@ -212,6 +247,7 @@ export default function MemoryScreen({ user }: { user: string }) {
           )}
         </div>
       </Card>
+      )}
 
       {receipt && (
         <div>
