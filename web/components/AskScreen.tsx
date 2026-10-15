@@ -104,7 +104,64 @@ export default function AskScreen({ user }: { user: string }) {
                     user_{user}
                   </span>
                 </div>
-                <p className="text-[15px] leading-[150%]">{resp.answer}</p>
+                {(resp.expertsBlock || []).length === 0 &&
+                  (resp.messagesBlock || []).length === 0 && (
+                    <p className="text-[15px] leading-[150%]">{resp.answer}</p>
+                  )}
+                {(resp.expertsBlock || []).length > 0 && (
+                  <div className="flex flex-col gap-2.5 border-t border-hairline pt-4">
+                    {(resp.expertsBlock || []).map((e) => {
+                      const top = Math.max(
+                        0.1,
+                        ...(resp.expertsBlock || []).map((x) => x.score)
+                      );
+                      return (
+                        <div key={e.person} className="flex flex-col gap-1">
+                          <div className="flex items-center gap-2">
+                            <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                              {e.person}
+                            </span>
+                            <span className="rounded-full bg-wash px-2 py-0.5 font-mono text-[11px] shadow-card">
+                              {e.score.toFixed(1)}
+                            </span>
+                          </div>
+                          <div className="h-1 overflow-hidden rounded-full bg-hairline">
+                            <div
+                              className="h-full rounded-full bg-accent"
+                              style={{ width: `${(e.score / top) * 100}%` }}
+                            />
+                          </div>
+                          <div className="text-xs text-muted">
+                            worked_on {e.breakdown.worked_on} · authored{" "}
+                            {e.breakdown.authored} · resolved{" "}
+                            {e.breakdown.resolved}
+                            {e.latest ? ` · latest ${shortDate(e.latest)}` : ""}
+                          </div>
+                        </div>
+                      );
+                    })}
+                  </div>
+                )}
+                {(resp.messagesBlock || []).length > 0 && (
+                  <div className="flex flex-col divide-y divide-hairline border-t border-hairline">
+                    {(resp.messagesBlock || []).map((m, i) => (
+                      <div key={m.source_ref || i} className="flex flex-col gap-1 py-3">
+                        <div className="flex flex-wrap items-center gap-2 text-xs">
+                          <span className="font-medium text-ink">{m.author}</span>
+                          {m.at && (
+                            <span className="text-muted">{shortDate(m.at)}</span>
+                          )}
+                          {m.channel && (
+                            <span className="rounded-full bg-wash px-2 py-0.5 font-mono text-[11px] text-muted shadow-card">
+                              #{m.channel}
+                            </span>
+                          )}
+                        </div>
+                        <p className="text-sm leading-relaxed">{m.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {resp.trace.length > 0 && (
                   <div className="flex flex-col">
                     {resp.trace.map((t, i) => (

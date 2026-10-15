@@ -41,10 +41,20 @@ export function shortDate(at?: string): string {
   return `${month} ${parseInt(m[3], 10)}`;
 }
 
+export type MessageBlock = {
+  author: string;
+  at: string;
+  channel: string;
+  text: string;
+  source_ref: string;
+};
+
 export type AskResp = {
   answer: string;
   trace: Trace[];
   evidence: Evidence[];
+  expertsBlock?: Expert[];
+  messagesBlock?: MessageBlock[];
   error?: string;
   action_id?: string;
   plan?: string[];
@@ -177,10 +187,47 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     const edges = firstWhy?.edges || [];
     for (let i = 0; i + 1 < nodes.length; i++)
       trace.push({ from: nodes[i], to: nodes[i + 1], edge: edges[i] || "" });
+    const expertsBlock: Expert[] = [];
+    const messagesBlock: MessageBlock[] = [];
+    if (Array.isArray(r.evidence))
+      for (const e of r.evidence as Record<string, unknown>[]) {
+        if (typeof e !== "object" || e === null) continue;
+        if (Array.isArray(e.experts))
+          for (const x of e.experts as Record<string, unknown>[])
+            expertsBlock.push({
+              person: String(x.person || "Unknown"),
+              score: Number(x.score || 0),
+              breakdown: {
+                worked_on: Number(
+                  (x.breakdown as Record<string, unknown> || {}).worked_on || 0),
+                authored: Number(
+                  (x.breakdown as Record<string, unknown> || {}).authored || 0),
+                resolved: Number(
+                  (x.breakdown as Record<string, unknown> || {}).resolved || 0),
+              },
+              latest: typeof x.latest === "string" ? x.latest : null,
+            });
+        if (Array.isArray(e.messages))
+          for (const m of e.messages as Record<string, unknown>[]) {
+            const text = String(m.text || "");
+            if (!text) continue;
+            const ref = String(m.source_ref || "");
+            const mid = String(m.message_id || "");
+            messagesBlock.push({
+              author: String(m.author || "Someone"),
+              at: String(m.at || ""),
+              channel: channelOf(ref, mid),
+              text,
+              source_ref: ref,
+            });
+          }
+      }
     return {
       answer: String(r.answer || ""),
       trace,
       evidence: refsFromEvidence(r.evidence),
+      expertsBlock,
+      messagesBlock,
     } as T;
   }
 
