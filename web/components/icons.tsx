@@ -13,6 +13,7 @@ import {
   CubeIcon,
   File02Icon,
   GridIcon,
+  Github01Icon,
   HelpCircleIcon,
   InboxIcon,
   Layers01Icon,
@@ -41,6 +42,7 @@ export const FileHIcon = makeIcon(File02Icon);
 export const UserHIcon = makeIcon(User03Icon);
 export const InboxHIcon = makeIcon(InboxIcon);
 export const GridHIcon = makeIcon(GridIcon);
+export const GithubHIcon = makeIcon(Github01Icon);
 export const CubeHIcon = makeIcon(CubeIcon);
 export const LayersHIcon = makeIcon(LayersIcon);
 export const Layers01HIcon = makeIcon(Layers01Icon);

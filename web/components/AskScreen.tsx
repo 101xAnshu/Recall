@@ -100,9 +100,9 @@ export default function AskScreen({ user }: { user: string }) {
                 <div className="flex items-start gap-1.5">
                   <FileHIcon aria-hidden className="text-info mt-[2px] size-3.5 shrink-0" />
                   <h3 className="min-w-0 flex-1">Traced answer</h3>
-                  <span className="text-subtle whitespace-nowrap font-mono text-[12px]">
-                    user_{user}
-                  </span>
+                </div>
+                <div className="font-mono text-[11px] text-faint">
+                  Scope: user_{user}
                 </div>
                 {(resp.expertsBlock || []).length === 0 &&
                   (resp.messagesBlock || []).length === 0 && (
@@ -116,12 +116,15 @@ export default function AskScreen({ user }: { user: string }) {
                         ...(resp.expertsBlock || []).map((x) => x.score)
                       );
                       return (
-                        <div key={e.person} className="flex flex-col gap-1">
+                        <div
+                          key={e.person}
+                          className="flex flex-col gap-1 rounded-[10px] border border-hairline bg-wash/60 p-3"
+                        >
                           <div className="flex items-center gap-2">
-                            <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                            <span className="truncate text-sm font-medium">
                               {e.person}
                             </span>
-                            <span className="rounded-full bg-wash px-2 py-0.5 font-mono text-[11px] shadow-card">
+                            <span className="rounded-full bg-white px-2 py-0.5 font-mono text-[11px] shadow-card">
                               {e.score.toFixed(1)}
                             </span>
                           </div>

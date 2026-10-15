@@ -14,6 +14,7 @@ import {
   AskHIcon,
   BlastHIcon,
   ExpertsHIcon,
+  GithubHIcon,
   HelpHIcon,
   ApprovalHIcon,
   MemoryHIcon,
@@ -134,6 +135,7 @@ export function SidebarContent({
 
       <div className="flex flex-col p-4">
         <SidebarItem
+          icon={GithubHIcon}
           label="Connect GitHub"
           collapsed={collapsed}
           className="gap-2"
