@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { api, type AskResp } from "../lib/mock-api";
+import { api, type AskResp } from "../lib/api";
 import { Card, CardBody, CardFooter } from "../components/card";
 import { AnswerSkeleton } from "../components/skeleton";
 import Button from "../components/_ui/button";
