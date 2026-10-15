@@ -108,7 +108,7 @@ def main():
     appr = call("POST", "/actions/approve",
                 {"action_id": prop["action_id"],
                  "thread_id": prop["thread_id"], "by": "anshu"})
-    check("approve executes", appr["status"] == "approved", str(appr))
+    check("approve executes", appr["status"] == "executed", str(appr))
     entries = call("GET", "/audit")["entries"]
     mine = [e for e in entries if e["action_id"] == prop["action_id"]][0]
     check("audit shows APPROVED_BY Anshu",
