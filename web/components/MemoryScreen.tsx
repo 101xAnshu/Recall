@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { api } from "../lib/mock-api";
+import { api } from "../lib/api";
 import { Card, CardBody, CardFooter } from "../components/card";
 import { RowsSkeleton } from "../components/skeleton";
 import Button from "../components/_ui/button";
