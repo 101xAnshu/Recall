@@ -47,7 +47,7 @@ function Tile({ label, value, tone }: { label: string; value: number | string; t
   );
 }
 
-export default function BlastScreen() {
+export default function BlastScreen({ graphDown = false }: { graphDown?: boolean }) {
   const [svc, setSvc] = useState("Ledger");
   const [rows, setRows] = useState<Row[]>([]);
   const [owners, setOwners] = useState<Record<string, string>>({});
@@ -121,6 +121,13 @@ export default function BlastScreen() {
 
       {!booted ? (
         <TilesSkeleton />
+      ) : graphDown ? (
+        <div className="rounded-2xl border border-hairline bg-white p-5 shadow-card">
+          <div className="text-sm font-medium">FalkorDB is disconnected</div>
+          <p className="text-muted-foreground mt-1 text-sm">
+            Dependency data is unavailable until you reconnect.
+          </p>
+        </div>
       ) : (
         <div className="grid grid-cols-2 gap-3.5 lg:grid-cols-4">
           <Tile label="Services affected" value={rows.length} tone={rows.length ? "text-danger" : undefined} />
@@ -130,6 +137,7 @@ export default function BlastScreen() {
         </div>
       )}
 
+      {!graphDown && (
       <Card>
         <CardBody className="gap-4">
           <div className="flex items-center justify-between gap-2">
@@ -191,6 +199,7 @@ export default function BlastScreen() {
           </div>
         </CardBody>
       </Card>
+      )}
     </>
   );
 }
