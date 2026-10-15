@@ -153,6 +153,7 @@ export default function HelpDialog({ open, onClose }: { open: boolean; onClose: 
                     <p><span className="font-mono text-[12px] text-foreground">ADR-</span> architecture decision records.</p>
                     <p><span className="font-mono text-[12px] text-foreground">PM-</span> fix pull requests.</p>
                     <p><span className="font-mono text-[12px] text-foreground">INC-</span> incidents.</p>
+                    <p><span className="font-mono text-[12px] text-foreground">source_ref</span> is where each fact came from.</p>
                   </div>
                 </div>
               </div>
