@@ -105,6 +105,68 @@ ORG_STATEMENTS = [
     "MATCH (n:Service {id: 'svc-notifications'}), "
     "(t:Topic {name: 'payout-retry'}) "
     "MERGE (n)-[:MENTIONS]->(t)",
+    # Team chat (ids carry the channel: MSG-INC = #incidents, MSG-BE = #backend)
+    "MERGE (m:Message {id: 'MSG-INC-01'}) "
+    "SET m.text = 'INC-231 opened: payment retries spiking on the ledger service, failure rate climbing.', "
+    "m.at = '2026-09-28', m.author = 'Priya', m.source_type = 'synthetic', "
+    "m.source_ref = 'seed/chat/incidents/MSG-INC-01'",
+    "MERGE (m:Message {id: 'MSG-INC-02'}) "
+    "SET m.text = 'Seeing the same spike from Payments side. Retries hammering ledger writes.', "
+    "m.at = '2026-09-28', m.author = 'Anshu', m.source_type = 'synthetic', "
+    "m.source_ref = 'seed/chat/incidents/MSG-INC-02'",
+    "MERGE (m:Message {id: 'MSG-INC-03'}) "
+    "SET m.text = 'Backend handlers have no backoff at all. Every failure retries immediately.', "
+    "m.at = '2026-09-29', m.author = 'Ravi', m.source_type = 'synthetic', "
+    "m.source_ref = 'seed/chat/incidents/MSG-INC-03'",
+    "MERGE (m:Message {id: 'MSG-INC-04'}) "
+    "SET m.text = 'Payments team says the retry storm is ours, backend says it is the ledger. Pulling traces now.', "
+    "m.at = '2026-09-29', m.author = 'Priya', m.source_type = 'synthetic', "
+    "m.source_ref = 'seed/chat/incidents/MSG-INC-04'",
+    "MERGE (m:Message {id: 'MSG-INC-05'}) "
+    "SET m.text = 'ADR-14 draft is up: exponential backoff on all retry paths.', "
+    "m.at = '2026-09-30', m.author = 'Anshu', m.source_type = 'synthetic', "
+    "m.source_ref = 'seed/chat/incidents/MSG-INC-05'",
+    "MERGE (m:Message {id: 'MSG-INC-06'}) "
+    "SET m.text = 'INC-231 resolved. Backoff deployed, retry volume back to normal.', "
+    "m.at = '2026-10-01', m.author = 'Priya', m.source_type = 'synthetic', "
+    "m.source_ref = 'seed/chat/incidents/MSG-INC-06'",
+    "MERGE (m:Message {id: 'MSG-INC-07'}) "
+    "SET m.text = 'Postmortem note: the blame thread wasted a day. Traces first next time.', "
+    "m.at = '2026-10-03', m.author = 'Anshu', m.source_type = 'synthetic', "
+    "m.source_ref = 'seed/chat/incidents/MSG-INC-07'",
+    "MERGE (m:Message {id: 'MSG-BE-01'}) "
+    "SET m.text = 'Proposal: add idempotency keys on retry so duplicates are safe even before backoff lands.', "
+    "m.at = '2026-09-29', m.author = 'Ravi', m.source_type = 'synthetic', "
+    "m.source_ref = 'seed/chat/backend/MSG-BE-01'",
+    "MERGE (m:Message {id: 'MSG-BE-02'}) "
+    "SET m.text = 'Idempotency keys approved for the retry worker. Pair it with ADR-14 backoff.', "
+    "m.at = '2026-09-30', m.author = 'Anshu', m.source_type = 'synthetic', "
+    "m.source_ref = 'seed/chat/backend/MSG-BE-02'",
+    "MERGE (m:Message {id: 'MSG-BE-03'}) "
+    "SET m.text = 'Payments confirms duplicate charges stopped once keys went live.', "
+    "m.at = '2026-10-01', m.author = 'Priya', m.source_type = 'synthetic', "
+    "m.source_ref = 'seed/chat/backend/MSG-BE-03'",
+    "MERGE (m:Message {id: 'MSG-BE-04'}) "
+    "SET m.text = 'Retry worker steady for a week. Closing the payout-retry watch.', "
+    "m.at = '2026-10-05', m.author = 'Ravi', m.source_type = 'synthetic', "
+    "m.source_ref = 'seed/chat/backend/MSG-BE-04'",
+    "MERGE (m:Message {id: 'MSG-BE-05'}) "
+    "SET m.text = 'Rollout window confirmed: ledger freeze lifts Friday, then we ship the queue migration.', "
+    "m.at = '2026-10-07', m.author = 'Anshu', m.source_type = 'synthetic', "
+    "m.source_ref = 'seed/chat/backend/MSG-BE-05'",
+    "MERGE (m:Message {id: 'MSG-BE-06'}) "
+    "SET m.text = 'Reminder: retry deploy window stays 2-4 AM until the freeze lifts.', "
+    "m.at = '2026-10-09', m.author = 'Priya', m.source_type = 'synthetic', "
+    "m.source_ref = 'seed/chat/backend/MSG-BE-06'",
+    "MERGE (m:Message {id: 'MSG-BE-07'}) "
+    "SET m.text = 'payout-retry retrospective drafted. Linking it to INC-231 and ADR-14.', "
+    "m.at = '2026-10-14', m.author = 'Ravi', m.source_type = 'synthetic', "
+    "m.source_ref = 'seed/chat/backend/MSG-BE-07'",
+    "MATCH (m:Message), (t:Topic {name: 'payout-retry'}) "
+    "WHERE m.id IN ['MSG-INC-01', 'MSG-INC-02', 'MSG-INC-03', 'MSG-INC-04', "
+    "'MSG-INC-05', 'MSG-INC-06', 'MSG-INC-07', 'MSG-BE-01', 'MSG-BE-02', "
+    "'MSG-BE-03', 'MSG-BE-04', 'MSG-BE-05', 'MSG-BE-06', 'MSG-BE-07'] "
+    "MERGE (m)-[:MENTIONS]->(t)",
 ]
 
 # Per-user memory graphs: (user_id, fact_id, text, salience, at)
