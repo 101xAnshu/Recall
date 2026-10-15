@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { api } from "../lib/mock-api";
+import { api } from "../lib/api";
 import { Card, CardBody } from "../components/card";
 import { RowsSkeleton } from "../components/skeleton";
 import Button from "../components/_ui/button";
@@ -138,10 +138,12 @@ export default function ApprovalsScreen({ user }: { user: string }) {
                       className="h-[30px] min-w-[140px] flex-1"
                     />
                     <Button
-                      variant="danger"
+                      variant="secondary"
                       size="md"
                       aria-busy={acting === a.id}
-                      onClick={() => act(a.id, "/actions/reject", { action_id: a.id, reason, user_id: user })}
+                      onClick={() =>
+                        act(a.id, "/actions/reject", { action_id: a.id, reason, user_id: user })
+                      }
                     >
                       Reject
                     </Button>

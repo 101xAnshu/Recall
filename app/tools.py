@@ -333,7 +333,7 @@ def audit_trail(limit=20):
         "MATCH (a:Action) "
         "OPTIONAL MATCH (a)-[r:APPROVED_BY|REJECTED_BY]->(p:Person) "
         "RETURN a.id AS action_id, a.goal AS goal, a.plan AS plan, "
-        "a.status AS status, "
+        "a.status AS status, a.reason AS reason, "
         "a.at AS at, type(r) AS decision, p.name AS decided_by "
         "ORDER BY a.at DESC LIMIT $limit",
         {"limit": limit},
