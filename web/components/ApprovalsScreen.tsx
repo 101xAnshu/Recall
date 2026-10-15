@@ -253,10 +253,10 @@ export default function ApprovalsScreen({
                       <div className="font-mono text-[12px] text-muted-foreground">
                         {e.id}
                         {e.by ? ` · by ${e.by}` : ""}
-                        {e.decided_at ? ` · ${e.decided_at}` : ""}
                         {e.proposed_by && e.proposed_by !== e.by
                           ? ` · proposed by ${e.proposed_by}`
                           : ""}
+                        {e.decided_at ? ` · ${e.decided_at}` : ""}
                         {e.status === "executed" && e.executed_at
                           ? ` · picked up from graph at ${e.executed_at}`
                           : ""}
