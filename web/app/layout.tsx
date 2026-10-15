@@ -1,5 +1,6 @@
 import type { Metadata } from "next";
 import { Geist, Geist_Mono, Inter } from "next/font/google";
+import Shell from "./shell";
 import "./globals.css";
 
 const geist = Geist({
@@ -30,7 +31,7 @@ export default function RootLayout({ children }: LayoutProps<"/">) {
       <body
         className={`${geist.variable} ${geistMono.variable} ${interDisplay.variable} relative z-0 font-sans antialiased`}
       >
-        {children}
+        <Shell>{children}</Shell>
       </body>
     </html>
   );
