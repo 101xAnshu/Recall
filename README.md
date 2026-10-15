@@ -88,9 +88,9 @@ flowchart TD
     INTENT -- "plain question" --> RESPOND
     INTENT -- "action intent" --> PLAN --> GATE
     GATE -- "approved" --> EXEC --> AUDIT
-    RETRIEVE <-.-> TOOLS
-    DRAFT <-.-> TOOLS
-    EXEC <-.-> TOOLS
+    RETRIEVE <--> TOOLS
+    DRAFT <--> TOOLS
+    EXEC <--> TOOLS
     TOOLS --> DB
 
     classDef client fill:#dbeafe,stroke:#2563eb,stroke-width:2px,color:#1e3a8a
@@ -106,8 +106,6 @@ flowchart TD
     class GATE gate
     class TOOLS,DB data
     class INTENT decision
-
-    linkStyle 0,1,2,3,4,5,6,7,8,9,10,11 stroke:#d1d5db,stroke-width:2px
 
 ```
 
