@@ -127,11 +127,11 @@ export default function AskScreen({ user }: { user: string }) {
                           </div>
                           <div className="h-1 overflow-hidden rounded-full bg-hairline">
                             <div
-                              className="h-full rounded-full bg-accent"
+                              className="h-full rounded-full bg-brand"
                               style={{ width: `${(e.score / top) * 100}%` }}
                             />
                           </div>
-                          <div className="text-xs text-muted">
+                          <div className="text-xs text-muted-foreground">
                             worked_on {e.breakdown.worked_on} · authored{" "}
                             {e.breakdown.authored} · resolved{" "}
                             {e.breakdown.resolved}
@@ -149,10 +149,10 @@ export default function AskScreen({ user }: { user: string }) {
                         <div className="flex flex-wrap items-center gap-2 text-xs">
                           <span className="font-medium text-ink">{m.author}</span>
                           {m.at && (
-                            <span className="text-muted">{shortDate(m.at)}</span>
+                            <span className="text-muted-foreground">{shortDate(m.at)}</span>
                           )}
                           {m.channel && (
-                            <span className="rounded-full bg-wash px-2 py-0.5 font-mono text-[11px] text-muted shadow-card">
+                            <span className="rounded-full bg-white px-2 py-0.5 font-mono text-[11px] text-muted-foreground shadow-card">
                               #{m.channel}
                             </span>
                           )}
