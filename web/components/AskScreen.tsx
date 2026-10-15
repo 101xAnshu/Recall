@@ -1,6 +1,6 @@
 "use client";
 import Link from "next/link";
-import { useEffect, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api, channelOf, shortDate, shortRef, type AskResp } from "../lib/api";
 import { Card, CardBody, CardFooter } from "../components/card";
 import { AnswerSkeleton } from "../components/skeleton";
@@ -15,12 +15,26 @@ const SAMPLES = [
   "What did the team say about payout-retry?",
 ];
 
-export default function AskScreen({ user }: { user: string }) {
+export default function AskScreen({
+  user,
+  graphDown = false,
+}: {
+  user: string;
+  graphDown?: boolean;
+}) {
   const [q, setQ] = useState("");
   const [resp, setResp] = useState<AskResp | null>(null);
   const [loading, setLoading] = useState(false);
+  const [showSkeleton, setShowSkeleton] = useState(false);
   const [showEv, setShowEv] = useState(false);
   const [runId, setRunId] = useState(0);
+  const timer = useRef<number | null>(null);
+
+  useEffect(() => {
+    return () => {
+      if (timer.current) window.clearTimeout(timer.current);
+    };
+  }, []);
 
   useEffect(() => {
     setResp(null);
@@ -31,6 +45,10 @@ export default function AskScreen({ user }: { user: string }) {
     if (loading || !question.trim()) return;
     setQ(question);
     setLoading(true);
+    setShowSkeleton(false);
+    if (!graphDown) {
+      timer.current = window.setTimeout(() => setShowSkeleton(true), 250);
+    }
     try {
       const r = await api<AskResp>("/ask", {
         method: "POST",
@@ -40,6 +58,11 @@ export default function AskScreen({ user }: { user: string }) {
     } catch {
       setResp({ answer: "Request failed.", trace: [], evidence: [] });
     }
+    if (timer.current) {
+      window.clearTimeout(timer.current);
+      timer.current = null;
+    }
+    setShowSkeleton(false);
     setShowEv(false);
     setRunId((id) => id + 1);
     setLoading(false);
@@ -93,7 +116,11 @@ export default function AskScreen({ user }: { user: string }) {
 
       <div aria-live="polite" className="flex min-h-[280px] flex-col">
         {loading ? (
-          <AnswerSkeleton />
+          showSkeleton ? (
+            <AnswerSkeleton />
+          ) : (
+            <div aria-hidden className="min-h-[280px]" />
+          )
         ) : resp ? (
           <div key={runId}>
             <Card>

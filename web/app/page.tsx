@@ -197,7 +197,7 @@ export default function Home() {
                   transition={{ duration: 0.12 }}
                   className="flex min-h-full w-full flex-col gap-3.5"
                 >
-              {nav === "ask" && <AskScreen user={user} />}
+              {nav === "ask" && <AskScreen user={user} graphDown={health === "down"} />}
               {nav === "blast" && <BlastScreen />}
               {nav === "who" && <WhoKnowsScreen />}
               {nav === "approvals" && <ApprovalsScreen user={user} />}
