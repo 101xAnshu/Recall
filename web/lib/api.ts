@@ -41,6 +41,12 @@ export function shortDate(at?: string): string {
   return `${month} ${parseInt(m[3], 10)}`;
 }
 
+export type BlastBlock = {
+  service: string;
+  owner: string;
+  hops: number | null;
+};
+
 export type MessageBlock = {
   author: string;
   at: string;
@@ -55,6 +61,7 @@ export type AskResp = {
   evidence: Evidence[];
   expertsBlock?: Expert[];
   messagesBlock?: MessageBlock[];
+  blastBlock?: BlastBlock[];
   error?: string;
   action_id?: string;
   plan?: string[];
@@ -189,6 +196,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
       trace.push({ from: nodes[i], to: nodes[i + 1], edge: edges[i] || "" });
     const expertsBlock: Expert[] = [];
     const messagesBlock: MessageBlock[] = [];
+    const blastBlock: BlastBlock[] = [];
     if (Array.isArray(r.evidence))
       for (const e of r.evidence as Record<string, unknown>[]) {
         if (typeof e !== "object" || e === null) continue;
@@ -207,6 +215,17 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
               },
               latest: typeof x.latest === "string" ? x.latest : null,
             });
+        if (Array.isArray(e.affected))
+          for (const r of e.affected as Record<string, unknown>[]) {
+            const service = String(r.affected || r.service || "");
+            if (!service) continue;
+            const hops = Number(r.hops);
+            blastBlock.push({
+              service,
+              owner: String(r.owner_team || r.owner || ""),
+              hops: Number.isFinite(hops) ? hops : null,
+            });
+          }
         if (Array.isArray(e.messages))
           for (const m of e.messages as Record<string, unknown>[]) {
             const text = String(m.text || "");
@@ -228,6 +247,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
       evidence: refsFromEvidence(r.evidence),
       expertsBlock,
       messagesBlock,
+      blastBlock,
     } as T;
   }
 

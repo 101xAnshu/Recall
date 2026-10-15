@@ -105,7 +105,8 @@ export default function AskScreen({ user }: { user: string }) {
                   Scope: user_{user}
                 </div>
                 {(resp.expertsBlock || []).length === 0 &&
-                  (resp.messagesBlock || []).length === 0 && (
+                  (resp.messagesBlock || []).length === 0 &&
+                  (resp.blastBlock || []).length === 0 && (
                     <p className="text-[15px] leading-[150%]">{resp.answer}</p>
                   )}
                 {(resp.expertsBlock || []).length > 0 && (
@@ -161,6 +162,30 @@ export default function AskScreen({ user }: { user: string }) {
                           )}
                         </div>
                         <p className="text-sm leading-relaxed">{m.text}</p>
+                      </div>
+                    ))}
+                  </div>
+                )}
+                {(resp.blastBlock || []).length > 0 && (
+                  <div className="flex flex-col gap-2.5 border-t border-hairline pt-4">
+                    {(resp.blastBlock || []).map((b) => (
+                      <div
+                        key={b.service}
+                        className="flex items-center gap-3 rounded-[10px] border border-hairline bg-wash/60 p-3"
+                      >
+                        <span className="min-w-0 flex-1 truncate text-sm font-medium">
+                          {b.service}
+                        </span>
+                        {b.owner && (
+                          <span className="shrink-0 text-xs text-muted-foreground">
+                            owner: {b.owner}
+                          </span>
+                        )}
+                        {b.hops !== null && (
+                          <span className="shrink-0 rounded-full bg-white px-2 py-0.5 font-mono text-[11px] shadow-card">
+                            {b.hops} hop{b.hops === 1 ? "" : "s"}
+                          </span>
+                        )}
                       </div>
                     ))}
                   </div>
