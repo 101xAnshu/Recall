@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useRef, useState } from "react";
-import { api } from "../lib/mock-api";
+import { api } from "../lib/api";
 import { Card, CardBody } from "../components/card";
 import { RowsSkeleton, TilesSkeleton } from "../components/skeleton";
 import Button, { buttonVariants } from "../components/_ui/button";
@@ -50,9 +50,20 @@ function Tile({ label, value, tone }: { label: string; value: number | string; t
 export default function BlastScreen() {
   const [svc, setSvc] = useState("Ledger");
   const [rows, setRows] = useState<Row[]>([]);
+  const [owners, setOwners] = useState<Record<string, string>>({});
   const [loading, setLoading] = useState(true);
   const [booted, setBooted] = useState(false);
   const reqId = useRef(0);
+
+  useEffect(() => {
+    api<{ services: { name: string; owner_team: string }[] }>("/services")
+      .then((s) => {
+        const map: Record<string, string> = {};
+        for (const x of s.services || []) map[x.name] = x.owner_team;
+        setOwners(map);
+      })
+      .catch(() => {});
+  }, []);
 
   const load = async (s: string) => {
     const id = ++reqId.current;
@@ -158,6 +169,23 @@ export default function BlastScreen() {
                 {rows.length === 0 && (
                   <p className="text-subtle">Nothing downstream. {svc} is isolated.</p>
                 )}
+                {SVCS.filter(
+                  (s) => s !== svc && !rows.some((r) => r.service === s)
+                ).map((s) => (
+                  <div
+                    key={s}
+                    className="text-muted-foreground flex flex-wrap items-center gap-x-3 gap-y-2 opacity-60"
+                  >
+                    <StatusBadge icon={SERVICE_ICONS[s] ?? CubeHIcon} tone="neutral" />
+                    <span className="w-24 truncate sm:w-28">{s}</span>
+                    <span className="min-w-[80px] flex-1 text-[12px]">
+                      {owners[s] || ""}
+                    </span>
+                    <span className="w-14 text-right font-mono text-[12px] tabular-nums">
+                      unaffected
+                    </span>
+                  </div>
+                ))}
               </>
             )}
           </div>
