@@ -1,6 +1,6 @@
 "use client";
 import { useEffect, useState } from "react";
-import { api, type AskResp } from "../lib/api";
+import { api, channelOf, shortDate, shortRef, type AskResp } from "../lib/api";
 import { Card, CardBody, CardFooter } from "../components/card";
 import { AnswerSkeleton } from "../components/skeleton";
 import Button from "../components/_ui/button";
@@ -132,15 +132,23 @@ export default function AskScreen({ user }: { user: string }) {
                     {showEv ? "Hide evidence" : `Evidence · ${resp.evidence.length}`}
                   </Button>
                   {showEv &&
-                    resp.evidence.map((e, i) => (
-                      <span
-                        key={i}
-                        title={e.source_ref}
-                        className="shadow-ring rounded-full bg-white px-2.5 py-1 font-mono text-[12px] text-muted-foreground"
-                      >
-                        {e.author ? `${e.author} · ${e.at}` : e.source_ref}
-                      </span>
-                    ))}
+                    resp.evidence.map((e, i) => {
+                      const channel = e.channel || channelOf(e.source_ref);
+                      const primary = e.author
+                        ? channel
+                          ? `${e.author} · #${channel} · ${shortDate(e.at)}`
+                          : `${e.author} · ${shortDate(e.at) || shortRef(e.source_ref)}`
+                        : shortRef(e.source_ref) || e.source_ref;
+                      return (
+                        <span
+                          key={i}
+                          title={e.source_ref}
+                          className="shadow-ring rounded-full bg-white px-2.5 py-1 font-mono text-[12px] text-muted-foreground"
+                        >
+                          {primary}
+                        </span>
+                      );
+                    })}
                 </CardFooter>
               )}
             </Card>

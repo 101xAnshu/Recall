@@ -10,7 +10,36 @@ export type Evidence = {
   source_ref: string;
   author?: string;
   at?: string;
+  channel?: string;
 };
+
+/** Short display id from a source ref, full ref stays in the tooltip. */
+export function shortRef(ref: string): string {
+  if (!ref) return "";
+  const parts = ref.split("/");
+  return parts[parts.length - 1] || ref;
+}
+
+/** Channel derived from a chat source ref (seed/chat/<channel>/...). */
+export function channelOf(ref: string, id?: string): string {
+  const m = (ref || "").match(/^seed\/chat\/([^/]+)\//);
+  if (m) return m[1];
+  const head = (id || "").toUpperCase();
+  if (head.startsWith("MSG-INC")) return "incidents";
+  if (head.startsWith("MSG-BE")) return "backend";
+  return "";
+}
+
+const MONTHS = ["Jan", "Feb", "Mar", "Apr", "May", "Jun",
+                "Jul", "Aug", "Sep", "Oct", "Nov", "Dec"];
+
+/** "2026-10-12" becomes "Oct 12"; anything else passes through. */
+export function shortDate(at?: string): string {
+  const m = (at || "").match(/^(\d{4})-(\d{2})-(\d{2})/);
+  if (!m) return at || "";
+  const month = MONTHS[parseInt(m[2], 10) - 1] || m[2];
+  return `${month} ${parseInt(m[3], 10)}`;
+}
 
 export type AskResp = {
   answer: string;
@@ -85,13 +114,16 @@ function refsFromEvidence(evidence: unknown): Evidence[] {
     if (Array.isArray(e.messages))
       for (const m of e.messages as Record<string, unknown>[]) {
         const ref = m.source_ref;
-        if (typeof ref === "string" && ref)
+        if (typeof ref === "string" && ref) {
+          const mid = typeof m.message_id === "string" ? m.message_id : "";
           out.push({
             label: "message",
             source_ref: ref,
             author: typeof m.author === "string" ? m.author : "",
             at: typeof m.at === "string" ? m.at : "",
+            channel: channelOf(ref, mid),
           });
+        }
       }
   }
   return out;
