@@ -307,7 +307,7 @@ def plan_drafter(state):
         plan.append(f"Notify {r['owner_team']} about impact on {r['affected']}")
     plan.append(f"Apply change to {service}")
     plan.append("Verify all affected services report healthy")
-    res = tools.propose_action(goal, plan)
+    res = tools.propose_action(goal, plan, state.get("user_id", "anshu"))
     return {"action_id": res["action_id"]}
 
 

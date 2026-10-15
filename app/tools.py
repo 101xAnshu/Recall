@@ -293,10 +293,16 @@ def forget_with_receipt(user_id, fact_id):
 # Action tools (org graph audit trail)
 
 
-def propose_action(goal, plan):
-    """Draft a plan as a proposed Action node. Nothing executes yet."""
+def propose_action(goal, plan, proposer="anshu"):
+    """Draft a plan as a proposed Action node. Nothing executes yet.
+
+    Records a PROPOSED_BY edge when the proposer is a known person,
+    following the audit-edge convention. Unknown proposers simply leave
+    the action unattributed rather than inventing a Person node.
+    """
     action_id = "ACT-" + uuid.uuid4().hex[:6]
-    _org().query(
+    org = _org()
+    org.query(
         "MERGE (a:Action {id: $aid}) "
         "SET a.goal = $goal, a.plan = $plan, a.status = 'proposed', "
         "a.at = $at, a.source_type = 'synthetic', "
@@ -304,6 +310,17 @@ def propose_action(goal, plan):
         {"aid": action_id, "goal": goal, "plan": json.dumps(plan),
          "at": TODAY, "aref": f"actions/{action_id}"},
     )
+    if proposer:
+        known = org.query(
+            "MATCH (p:Person {id: $by}) RETURN p.id AS pid",
+            {"by": proposer},
+        )
+        if known.result_set:
+            org.query(
+                "MATCH (a:Action {id: $aid}), (p:Person {id: $by}) "
+                "MERGE (a)-[:PROPOSED_BY]->(p)",
+                {"aid": action_id, "by": proposer},
+            )
     return {"action_id": action_id, "plan": plan}
 
 
@@ -345,10 +362,12 @@ def audit_trail(limit=20):
         _org(),
         "MATCH (a:Action) "
         "OPTIONAL MATCH (a)-[r:APPROVED_BY|REJECTED_BY]->(p:Person) "
+        "OPTIONAL MATCH (a)-[:PROPOSED_BY]->(pp:Person) "
         "RETURN a.id AS action_id, a.goal AS goal, a.plan AS plan, "
         "a.status AS status, a.reason AS reason, "
         "a.at AS at, a.executed_at AS executed_at, "
-        "type(r) AS decision, p.name AS decided_by "
+        "type(r) AS decision, p.name AS decided_by, "
+        "pp.name AS proposed_by "
         "ORDER BY a.at DESC LIMIT $limit",
         {"limit": limit},
     )
@@ -361,9 +380,11 @@ def get_action(action_id):
         _org(),
         "MATCH (a:Action {id: $aid}) "
         "OPTIONAL MATCH (a)-[r:APPROVED_BY|REJECTED_BY]->(p:Person) "
+        "OPTIONAL MATCH (a)-[:PROPOSED_BY]->(pp:Person) "
         "RETURN a.id AS action_id, a.goal AS goal, a.plan AS plan, "
         "a.status AS status, a.at AS at, a.executed_at AS executed_at, "
-        "type(r) AS decision, p.name AS decided_by",
+        "type(r) AS decision, p.name AS decided_by, "
+        "pp.name AS proposed_by",
         {"aid": action_id},
     )
     if not rows:
@@ -382,6 +403,7 @@ def get_action(action_id):
         "executed_at": row["executed_at"],
         "decision": row["decision"],
         "decided_by": row["decided_by"],
+        "proposed_by": row["proposed_by"],
     }
 
 
