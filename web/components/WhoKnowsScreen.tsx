@@ -27,7 +27,7 @@ function Bar({ value, max, className }: { value: number; max: number; className:
   );
 }
 
-export default function WhoKnowsScreen() {
+export default function WhoKnowsScreen({ graphDown = false }: { graphDown?: boolean }) {
   const [topic, setTopic] = useState("payout-retry");
   const [experts, setExperts] = useState<Expert[]>([]);
   const [ran, setRan] = useState(false);
@@ -89,6 +89,15 @@ export default function WhoKnowsScreen() {
       <div aria-live="polite" className="flex min-h-[280px] flex-col">
         {loading ? (
           <RowsSkeleton rows={4} />
+        ) : graphDown ? (
+          <Card>
+            <CardBody className="gap-2">
+              <div className="text-sm font-medium">FalkorDB is disconnected</div>
+              <p className="text-muted-foreground text-sm">
+                Expertise data is unavailable until you reconnect.
+              </p>
+            </CardBody>
+          </Card>
         ) : top ? (
           <Card>
             <CardBody className="gap-4">
