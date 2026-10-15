@@ -180,6 +180,8 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
         by: typeof e.decided_by === "string" ? e.decided_by : null,
         reason: typeof e.reason === "string" ? e.reason : null,
         decided_at: String(e.at || ""),
+        executed_at:
+          typeof e.executed_at === "string" ? e.executed_at : null,
       })),
     } as T;
   }

@@ -17,6 +17,7 @@ type Entry = {
   by: string | null;
   reason?: string | null;
   decided_at?: string | null;
+  executed_at?: string | null;
 };
 
 export default function ApprovalsScreen({ user }: { user: string }) {
@@ -181,7 +182,7 @@ export default function ApprovalsScreen({ user }: { user: string }) {
                       <span
                         className={cn(
                           "mt-1.5 size-1.5 rounded-full transition-colors duration-150",
-                          e.status === "approved"
+                          e.status === "approved" || e.status === "executed"
                             ? "bg-success"
                             : e.status === "rejected"
                               ? "bg-danger"
@@ -196,7 +197,7 @@ export default function ApprovalsScreen({ user }: { user: string }) {
                         <span
                           className={cn(
                             "shrink-0 rounded-[10px] px-2 py-0.5 font-mono text-[12px] transition-colors duration-150",
-                            e.status === "approved"
+                            e.status === "approved" || e.status === "executed"
                               ? "bg-success/[0.1] text-success"
                               : e.status === "rejected"
                                 ? "bg-danger/[0.08] text-danger"
@@ -210,7 +211,24 @@ export default function ApprovalsScreen({ user }: { user: string }) {
                         {e.id}
                         {e.by ? ` · by ${e.by}` : ""}
                         {e.decided_at ? ` · ${e.decided_at}` : ""}
+                        {e.status === "executed" && e.executed_at
+                          ? ` · picked up from graph at ${e.executed_at}`
+                          : ""}
                       </div>
+                      {e.status === "approved" && (
+                        <div className="pt-1">
+                          <Button
+                            variant="secondary"
+                            size="sm"
+                            aria-busy={acting === e.id}
+                            onClick={() =>
+                              act(e.id, "/actions/execute", { action_id: e.id })
+                            }
+                          >
+                            Execute
+                          </Button>
+                        </div>
+                      )}
                       {e.status === "rejected" && e.reason && (
                         <div className="text-muted-foreground">Reason: “{e.reason}”</div>
                       )}
