@@ -146,28 +146,6 @@ export default function HelpDialog({ open, onClose }: { open: boolean; onClose: 
                     </p>
                   </div>
                 ))}
-                <div className="shadow-card flex w-full flex-col gap-2 rounded-2xl bg-white p-4">
-                  <h3>Demo script (≤3 min)</h3>
-                  <ol className="divide-border flex flex-col divide-y">
-                    {[
-                      "Ask “Why did INC-231 happen?” → traced timeline + evidence.",
-                      "“What breaks if we change Ledger?” → Payments, Retry, Notifications.",
-                      "“Who knows payout-retry?” → Priya 2.0 / Anshu 1.5 breakdown.",
-                      "Switch Anshu → Priya → remember → supersede → erase → receipt.",
-                      "“Migrate Retry” → plan pauses → approve → audit entry.",
-                      "Kill-switch: stop FalkorDB → graceful fallback → restart.",
-                    ].map((step, i) => (
-                      <li key={i} className="flex items-center gap-3 py-2.5">
-                        <span className="text-subtle w-6 shrink-0 font-mono text-[12px] tabular-nums">
-                          {i + 1}
-                        </span>
-                        <span className="min-w-0 flex-1">
-                          <ArrowText text={step} />
-                        </span>
-                      </li>
-                    ))}
-                  </ol>
-                </div>
               </div>
             </div>
             <div className="border-border flex flex-wrap items-center justify-end gap-2 border-t p-4">
