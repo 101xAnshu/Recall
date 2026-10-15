@@ -129,9 +129,16 @@ export default function AskScreen({
                   <FileHIcon aria-hidden className="text-info mt-[2px] size-3.5 shrink-0" />
                   <h3 className="min-w-0 flex-1">Traced answer</h3>
                 </div>
-                <div className="font-mono text-[11px] text-faint">
-                  Scope: user_{user}
-                </div>
+                {resp.scopeLabel && (
+                  <div className="font-mono text-[11px] text-faint">
+                    {resp.scopeLabel}
+                  </div>
+                )}
+                {resp.isOutage && (
+                  <div className="rounded-[10px] border border-hairline bg-wash p-3 text-sm">
+                    FalkorDB is disconnected, so graph answers are unavailable.
+                  </div>
+                )}
                 {(resp.expertsBlock || []).length === 0 &&
                   (resp.messagesBlock || []).length === 0 &&
                   (resp.blastBlock || []).length === 0 && (
