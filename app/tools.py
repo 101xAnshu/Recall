@@ -145,6 +145,19 @@ def list_services():
     return {"services": rows}
 
 
+def recall_messages(topic="payout-retry", limit=15):
+    """Team chat mentioning a topic, oldest first with author and date."""
+    rows = _rows(
+        _org(),
+        "MATCH (m:Message)-[:MENTIONS]->(t:Topic {name: $topic}) "
+        "RETURN m.id AS message_id, m.text AS text, m.author AS author, "
+        "m.at AS at, m.source_ref AS source_ref "
+        "ORDER BY m.at, m.id LIMIT $limit",
+        {"topic": topic, "limit": limit},
+    )
+    return {"topic": topic, "messages": rows}
+
+
 # Memory tools (per-user graphs)
 
 

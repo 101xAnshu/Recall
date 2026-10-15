@@ -147,6 +147,10 @@ def retriever(state):
         res = tools.who_knows(state.get("topic") or "payout-retry")
         evidence = [{"source": "org", "kind": "who-knows",
                      "experts": res["experts"]}]
+        if state.get("topic"):
+            msgs = tools.recall_messages(state.get("topic"))
+            evidence.append({"source": "org", "kind": "messages",
+                             "messages": msgs["messages"]})
     if scope in ("user-only", "both") and intent in ("memory", "unsupported"):
         mem = tools.recall_memory(user_id)
         evidence.append({"source": user_graph_label(user_id), "kind": "memory",
@@ -226,6 +230,11 @@ def _template_draft(state):
                 f"{e['person']} score {e['score']} "
                 f"(worked_on {b['worked_on']}, authored {b['authored']}, "
                 f"resolved {b['resolved']}, latest {e['latest']})")
+        for e in evidence:
+            if e.get("kind") == "messages":
+                for m in e.get("messages", []):
+                    lines.append(
+                        f"{m['author']} ({m['at']}): {m['text']}")
         return "\n".join(lines)
     if intent == "memory":
         facts = []
