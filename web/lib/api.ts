@@ -63,6 +63,8 @@ export type AskResp = {
   messagesBlock?: MessageBlock[];
   blastBlock?: BlastBlock[];
   blastService?: string;
+  isOutage?: boolean;
+  scopeLabel?: string;
   error?: string;
   action_id?: string;
   plan?: string[];
@@ -177,7 +179,12 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
   if (path === "/ask" && method === "POST") {
     const r = await call(path, method, body);
     if (r.error && !r.answer)
-      return { answer: String(r.error), trace: [], evidence: [] } as T;
+      return {
+        answer: String(r.error),
+        trace: [],
+        evidence: [],
+        isOutage: true,
+      } as T;
     if (r.pending_action) {
       return {
         answer: String(r.answer || ""),
@@ -199,9 +206,11 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     const messagesBlock: MessageBlock[] = [];
     const blastBlock: BlastBlock[] = [];
     let blastService = "";
+    const seenSources = new Set<string>();
     if (Array.isArray(r.evidence))
       for (const e of r.evidence as Record<string, unknown>[]) {
         if (typeof e !== "object" || e === null) continue;
+        if (typeof e.source === "string" && e.source) seenSources.add(e.source);
         if (Array.isArray(e.experts))
           for (const x of e.experts as Record<string, unknown>[])
             expertsBlock.push({
@@ -245,6 +254,16 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
             });
           }
       }
+    const hasOrg = seenSources.has("org");
+    const hasUser = [...seenSources].some((s) => s.startsWith("user_"));
+    const scopeLabel =
+      hasOrg && hasUser
+        ? "Scope: company graph + personal memory"
+        : hasUser
+          ? "Scope: personal memory"
+          : hasOrg
+            ? "Scope: company graph"
+            : "";
     return {
       answer: String(r.answer || ""),
       trace,
@@ -253,6 +272,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
       messagesBlock,
       blastBlock,
       blastService,
+      scopeLabel,
     } as T;
   }
 

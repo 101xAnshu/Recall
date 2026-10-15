@@ -1,4 +1,5 @@
 "use client";
+import Link from "next/link";
 import { useEffect, useState } from "react";
 import { api, channelOf, shortDate, shortRef, type AskResp } from "../lib/api";
 import { Card, CardBody, CardFooter } from "../components/card";
@@ -109,6 +110,32 @@ export default function AskScreen({ user }: { user: string }) {
                   (resp.blastBlock || []).length === 0 && (
                     <p className="text-[15px] leading-[150%]">{resp.answer}</p>
                   )}
+                {resp.action_id && (resp.plan || []).length > 0 && (
+                  <div className="flex flex-col gap-2.5 border-t border-hairline pt-4">
+                    <div className="text-sm font-medium">
+                      Waiting for approval
+                    </div>
+                    <ol>
+                      {(resp.plan || []).map((step, i) => (
+                        <li
+                          key={i}
+                          className="flex items-center gap-3 border-t border-hairline py-2 text-sm first:border-0"
+                        >
+                          <span className="w-6 shrink-0 font-mono text-[11px] text-faint">
+                            {i + 1}
+                          </span>
+                          <span className="min-w-0 flex-1">{step}</span>
+                        </li>
+                      ))}
+                    </ol>
+                    <Link
+                      href="/approvals"
+                      className="w-fit rounded-[10px] bg-ink px-4 py-2 text-sm font-medium text-white"
+                    >
+                      Review in Approvals
+                    </Link>
+                  </div>
+                )}
                 {(resp.expertsBlock || []).length > 0 && (
                   <div className="flex flex-col gap-2.5 border-t border-hairline pt-4">
                     {(resp.expertsBlock || []).map((e) => {
