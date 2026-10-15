@@ -152,7 +152,7 @@ export default function HelpDialog({ open, onClose }: { open: boolean; onClose: 
                     {[
                       "Ask “Why did INC-231 happen?” → traced timeline + evidence.",
                       "“What breaks if we change Ledger?” → Payments, Retry, Notifications.",
-                      "“Who knows payout-retry?” → Priya 3.0 / Anshu 2.5 breakdown.",
+                      "“Who knows payout-retry?” → Priya 2.0 / Anshu 1.5 breakdown.",
                       "Switch Anshu → Priya → remember → supersede → erase → receipt.",
                       "“Migrate Retry” → plan pauses → approve → audit entry.",
                       "Kill-switch: stop FalkorDB → graceful fallback → restart.",
