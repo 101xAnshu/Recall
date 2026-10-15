@@ -5,7 +5,12 @@
 const BASE = "http://localhost:8000";
 
 export type Trace = { from: string; to: string; edge: string };
-export type Evidence = { label: string; source_ref: string };
+export type Evidence = {
+  label: string;
+  source_ref: string;
+  author?: string;
+  at?: string;
+};
 
 export type AskResp = {
   answer: string;
@@ -77,6 +82,17 @@ function refsFromEvidence(evidence: unknown): Evidence[] {
     if (Array.isArray(e.facts))
       for (const f of e.facts as Record<string, unknown>[])
         push(f.source_ref, "memory");
+    if (Array.isArray(e.messages))
+      for (const m of e.messages as Record<string, unknown>[]) {
+        const ref = m.source_ref;
+        if (typeof ref === "string" && ref)
+          out.push({
+            label: "message",
+            source_ref: ref,
+            author: typeof m.author === "string" ? m.author : "",
+            at: typeof m.at === "string" ? m.at : "",
+          });
+      }
   }
   return out;
 }

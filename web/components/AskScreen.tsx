@@ -11,6 +11,7 @@ const SAMPLES = [
   "Why did INC-231 happen?",
   "What breaks if we change Ledger?",
   "Who knows payout-retry?",
+  "What did the team say about payout-retry?",
 ];
 
 export default function AskScreen({ user }: { user: string }) {
@@ -134,9 +135,10 @@ export default function AskScreen({ user }: { user: string }) {
                     resp.evidence.map((e, i) => (
                       <span
                         key={i}
+                        title={e.source_ref}
                         className="shadow-ring rounded-full bg-white px-2.5 py-1 font-mono text-[12px] text-muted-foreground"
                       >
-                        {e.source_ref}
+                        {e.author ? `${e.author} · ${e.at}` : e.source_ref}
                       </span>
                     ))}
                 </CardFooter>
