@@ -146,6 +146,15 @@ export default function HelpDialog({ open, onClose }: { open: boolean; onClose: 
                     </p>
                   </div>
                 ))}
+                <div className="shadow-card flex w-full flex-col gap-2 rounded-2xl bg-white p-4">
+                  <h3>ID glossary</h3>
+                  <div className="text-muted-foreground flex flex-col gap-1.5">
+                    <p><span className="font-mono text-[12px] text-foreground">MSG-</span> team chat messages (#incidents, #backend).</p>
+                    <p><span className="font-mono text-[12px] text-foreground">ADR-</span> architecture decision records.</p>
+                    <p><span className="font-mono text-[12px] text-foreground">PM-</span> fix pull requests.</p>
+                    <p><span className="font-mono text-[12px] text-foreground">INC-</span> incidents.</p>
+                  </div>
+                </div>
               </div>
             </div>
             <div className="border-border flex flex-wrap items-center justify-end gap-2 border-t p-4">
