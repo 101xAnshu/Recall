@@ -167,6 +167,28 @@ ORG_STATEMENTS = [
     "'MSG-INC-05', 'MSG-INC-06', 'MSG-INC-07', 'MSG-BE-01', 'MSG-BE-02', "
     "'MSG-BE-03', 'MSG-BE-04', 'MSG-BE-05', 'MSG-BE-06', 'MSG-BE-07'] "
     "MERGE (m)-[:MENTIONS]->(t)",
+    # Procedures (steps stored as JSON, same convention as Action.plan)
+    "MERGE (p:Procedure {id: 'PROC-RETRY-1'}) "
+    "SET p.title = 'Payout-retry incident runbook', p.at = '2026-10-02', "
+    "p.steps = '[\"Confirm the spike in INC-231 dashboards and open the incident thread.\", "
+    "\"Check backend retry handlers for missing backoff per ADR-14.\", "
+    "\"Attach idempotency keys to the retry worker before changing limits.\", "
+    "\"Verify payout-retry volume returns to baseline, then resolve INC-231.\", "
+    "\"Write the postmortem and link it to ADR-14.\"]', "
+    "p.source_type = 'synthetic', "
+    "p.source_ref = 'seed/org/procedures/retry-runbook'",
+    "MERGE (p:Procedure {id: 'PROC-LEDGER-1'}) "
+    "SET p.title = 'Ledger deploy checklist', p.at = '2026-10-06', "
+    "p.steps = '[\"Freeze ledger writes and announce the window to Payments-team.\", "
+    "\"Snapshot balances before touching the Ledger service.\", "
+    "\"Deploy in the 2-4 AM window with exponential backoff enabled.\", "
+    "\"Verify settlement parity, then lift the freeze.\", "
+    "\"Post rollout notes mentioning payout-retry behavior.\"]', "
+    "p.source_type = 'synthetic', "
+    "p.source_ref = 'seed/org/procedures/ledger-checklist'",
+    "MATCH (p:Procedure), (t:Topic {name: 'payout-retry'}) "
+    "WHERE p.id IN ['PROC-RETRY-1', 'PROC-LEDGER-1'] "
+    "MERGE (p)-[:MENTIONS]->(t)",
 ]
 
 # Per-user memory graphs: (user_id, fact_id, text, salience, at)
