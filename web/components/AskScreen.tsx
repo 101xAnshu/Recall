@@ -183,8 +183,11 @@ export default function AskScreen({
                           className="flex flex-col gap-1 rounded-[10px] border border-hairline bg-wash/60 p-3"
                         >
                           <div className="flex items-center gap-2">
-                            <span className="truncate text-sm font-medium">
+                            <span className="min-w-0 flex-1 truncate text-sm font-medium">
                               {e.person}
+                            </span>
+                            <span className="shrink-0 text-[11px] text-muted-foreground">
+                              confidence
                             </span>
                             <span className="rounded-full bg-white px-2 py-0.5 font-mono text-[11px] shadow-card">
                               {e.score.toFixed(1)}

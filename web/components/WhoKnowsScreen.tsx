@@ -114,7 +114,10 @@ export default function WhoKnowsScreen({ graphDown = false }: { graphDown?: bool
                     <UserHIcon aria-hidden className="text-info size-3.5 shrink-0" />
                     <span className="w-24 truncate capitalize">{e.person}</span>
                     <Bar value={e.score} max={max} className="bg-info" />
-                    <span className="text-muted-foreground w-8 text-right font-mono text-[12px] tabular-nums">
+                    <span className="shrink-0 text-[11px] text-muted-foreground">
+                      confidence
+                    </span>
+                    <span className="rounded-full bg-white px-2 py-0.5 font-mono text-[11px] shadow-card">
                       {e.score}
                     </span>
                   </div>
