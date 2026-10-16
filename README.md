@@ -15,10 +15,12 @@ This is one entry across all three tracks:
 
 - **Track 1 - Agents That Act on Connected Data:** multi-hop blast-radius
   reasoning drafts a migration plan, the loop pauses at an approval gate,
-  and every decision lands in an audit trail.
+  every decision lands in an audit trail, and the agent selects its FalkorDB
+  tools through an MCP client.
 - **Track 2 - Agent Memory and Coordination:** episodic-to-semantic memory,
   per-employee isolated graphs, supersession history, forgetting with
-  erasure receipts and negative-recall proof.
+  erasure receipts and negative-recall proof, plus procedural memory
+  (seeded runbooks; "how do we" questions return steps with sources).
 - **Track 3 - Company Brain:** ownership, expertise ranking, decision
   provenance, and every answer carrying traced paths plus sources.
 
@@ -120,7 +122,9 @@ parameterized hero queries against one graph each, and drafts answers only
 from returned evidence, with every claim citing a `source_ref`. Anything
 that looks like an irreversible action becomes a proposed `Action` node;
 the loop pauses until a human approves or rejects, then writes
-`APPROVED_BY` or `REJECTED_BY` edges. Memory writes go to the asker's own
+`APPROVED_BY` or `REJECTED_BY` edges. Tools run behind an MCP client
+(same logic, stdio transport), and how-do questions route to
+recall_procedure. Memory writes go to the asker's own
 graph. FalkorDB never sees a cross-graph query.
 
 ## Graph data model
@@ -140,6 +144,7 @@ Node labels (every node carries `source_type` plus `source_ref`):
 | `Commit`         | `id`, `message`, `sha`, `at`                                                        |
 | `PR`             | `id`, `title`, `at`                                                                 |
 | `Message`        | `id`, `text`, `at`, `author`                                                        |
+| `Procedure`      | `id`, `title`, `steps`, `source_type`, `source_ref`                                 |
 | `Topic`          | `name`                                                                              |
 | `MemoryFact`     | `id`, `text`, `salience`, `at`, `valid_until` (null means current), `superseded_by` |
 | `Action`         | `id`, `goal`, `plan` (JSON), `status` (proposed, approved, rejected, executed), `at`, `executed_at` |
