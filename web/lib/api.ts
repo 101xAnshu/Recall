@@ -373,9 +373,6 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     const wantHistory = params.get("history") === "true";
     const cur = await call(`/memory?user_id=${user}`, "GET");
     const current = Array.isArray(cur.facts) ? cur.facts : [];
-    if (!wantHistory) return { facts: current } as T;
-    const hist = await call(`/memory/history?user_id=${user}`, "GET");
-    const past = Array.isArray(hist.history) ? hist.history : [];
     const mapFact = (f: Record<string, unknown>) => ({
       id: String(f.fact_id || ""),
       text: String(f.text || ""),
@@ -386,6 +383,9 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
         typeof f.superseded_by === "string" ? f.superseded_by : null,
       source_ref: typeof f.source_ref === "string" ? f.source_ref : "",
     });
+    if (!wantHistory) return { facts: current.map(mapFact) } as T;
+    const hist = await call(`/memory/history?user_id=${user}`, "GET");
+    const past = Array.isArray(hist.history) ? hist.history : [];
     return { facts: [...current.map(mapFact), ...past.map(mapFact)] } as T;
   }
   if (path === "/memory/remember" && method === "POST") {
