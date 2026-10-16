@@ -55,6 +55,17 @@ def main():
     check("who-knows latest present",
           all(e["latest"] for e in who["evidence"][0]["experts"]))
 
+    proc = call("POST", "/ask",
+               {"question": "How do we handle a payout-retry incident?",
+                "user_id": "anshu"})
+    pev = [e for e in proc.get("evidence", []) if e.get("kind") == "procedures"]
+    check("procedures retrieved",
+          len(pev) > 0 and len(pev[0].get("procedures", [])) >= 1,
+          str([p.get("title") for p in pev[0].get("procedures", [])]))
+    check("procedure steps with sources",
+          all(p.get("steps") and p.get("source_ref")
+              for p in pev[0].get("procedures", [])))
+
     mem = call("POST", "/ask", {"question": "What do I remember?",
                                 "user_id": "anshu"})
     check("tenant memory isolated",
@@ -123,9 +134,30 @@ def main():
                 "reason": "freeze window unconfirmed"})
     check("reject records", rej["status"] == "rejected", str(rej))
 
+    prop3 = call("POST", "/actions/propose",
+                 {"goal": "Migrate Notifications to the new queue",
+                  "user_id": "anshu"})
+    aid3 = prop3["action_id"]
+    call("POST", "/actions/approve",
+         {"action_id": aid3, "by": "anshu"})
+    exe = call("POST", "/actions/execute", {"action_id": aid3})
+    check("direct execute marks executed",
+          exe.get("status") == "executed" and exe.get("action_id") == aid3,
+          str(exe))
+
     miss = call("GET", "/blast-radius?service=Nope")
     check("unknown service is honest, not fallback",
           miss.get("error", "").startswith("unknown service"), str(miss))
+
+    call("POST", "/admin/disconnect")
+    down = call("POST", "/ask", {"question": "Why did INC-231 happen?",
+                                 "user_id": "anshu"})
+    check("outage returns fallback", down.get("error") == FALLBACK, str(down))
+    call("POST", "/admin/reconnect")
+    up = call("POST", "/ask", {"question": "Why did INC-231 happen?",
+                               "user_id": "anshu"})
+    check("recovery returns traced answer",
+          "Commit:" in " -> ".join(up.get("trace", [])), str(up.get("trace")))
 
     print("E2E PASS: full loop works")
 
