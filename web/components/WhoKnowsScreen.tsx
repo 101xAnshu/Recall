@@ -28,19 +28,24 @@ function Bar({ value, max, className }: { value: number; max: number; className:
 }
 
 export default function WhoKnowsScreen({ graphDown = false }: { graphDown?: boolean }) {
-  const [topic, setTopic] = useState("payout-retry");
+  const [topic, setTopic] = useState("");
+  const [searched, setSearched] = useState("");
   const [experts, setExperts] = useState<Expert[]>([]);
   const [ran, setRan] = useState(false);
   const [loading, setLoading] = useState(false);
   const reqId = useRef(0);
 
   const run = async () => {
+    const text = topic.trim();
+    if (!text || loading) return;
     const id = ++reqId.current;
     setLoading(true);
     try {
-      const r = await api<{ experts: Expert[] }>(`/who-knows?topic=${encodeURIComponent(topic)}`);
+      const r = await api<{ experts: Expert[] }>(`/who-knows?topic=${encodeURIComponent(text)}`);
       if (reqId.current !== id) return;
       setExperts(r.experts || []);
+      setSearched(text);
+      setTopic("");
     } catch {
       if (reqId.current !== id) return;
       setExperts([]);
@@ -161,7 +166,7 @@ export default function WhoKnowsScreen({ graphDown = false }: { graphDown?: bool
           <Card>
             <CardBody className="items-center gap-2 py-10 text-center">
               <span className="text-subtle">No experts here yet</span>
-              <p className="text-subtle">Nobody in the graph knows {topic} yet.</p>
+              <p className="text-subtle">Nobody in the graph knows {searched} yet.</p>
             </CardBody>
           </Card>
         ) : (

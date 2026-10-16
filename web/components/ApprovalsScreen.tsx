@@ -28,7 +28,7 @@ export default function ApprovalsScreen({
   user: string;
   graphDown?: boolean;
 }) {
-  const [goal, setGoal] = useState("Migrate Retry to the new queue");
+  const [goal, setGoal] = useState("");
   const [entries, setEntries] = useState<Entry[]>([]);
   const [reason, setReason] = useState("");
   const [booted, setBooted] = useState(false);
@@ -62,7 +62,8 @@ export default function ApprovalsScreen({
     if (!goal.trim()) return;
     setNotice("");
     try {
-      await api("/actions/propose", { method: "POST", body: JSON.stringify({ goal }) });
+      await api("/actions/propose", { method: "POST", body: JSON.stringify({ goal: goal.trim() }) });
+      setGoal("");
     } catch (err) {
       setNotice(failNotice(err));
       return;
