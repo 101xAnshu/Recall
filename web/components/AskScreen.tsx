@@ -143,9 +143,32 @@ export default function AskScreen({
                 )}
                 {(resp.expertsBlock || []).length === 0 &&
                   (resp.messagesBlock || []).length === 0 &&
-                  (resp.blastBlock || []).length === 0 && (
+                  (resp.blastBlock || []).length === 0 &&
+                  (resp.proceduresBlock || []).length === 0 && (
                     <p className="text-[15px] leading-[150%]">{resp.answer}</p>
                   )}
+                {(resp.proceduresBlock || []).length > 0 && (
+                  <div className="flex flex-col gap-4 border-t border-hairline pt-4">
+                    {(resp.proceduresBlock || []).map((p) => (
+                      <div key={p.source_ref || p.title}>
+                        <div className="text-sm font-medium">{p.title}</div>
+                        <ol className="mt-1.5 flex flex-col">
+                          {p.steps.map((step, i) => (
+                            <li
+                              key={i}
+                              className="flex items-start gap-3 border-t border-hairline py-2 text-sm first:border-0"
+                            >
+                              <span className="w-6 shrink-0 font-mono text-[11px] text-faint">
+                                {i + 1}
+                              </span>
+                              <span className="min-w-0 flex-1">{step}</span>
+                            </li>
+                          ))}
+                        </ol>
+                      </div>
+                    ))}
+                  </div>
+                )}
                 {resp.action_id && (resp.plan || []).length > 0 && (
                   <div className="flex flex-col gap-2.5 border-t border-hairline pt-4">
                     <div className="text-sm font-medium">

@@ -47,6 +47,12 @@ export type BlastBlock = {
   hops: number | null;
 };
 
+export type ProcedureBlock = {
+  title: string;
+  steps: string[];
+  source_ref: string;
+};
+
 export type MessageBlock = {
   author: string;
   at: string;
@@ -63,6 +69,7 @@ export type AskResp = {
   messagesBlock?: MessageBlock[];
   blastBlock?: BlastBlock[];
   blastService?: string;
+  proceduresBlock?: ProcedureBlock[];
   isOutage?: boolean;
   scopeLabel?: string;
   error?: string;
@@ -145,6 +152,9 @@ function refsFromEvidence(evidence: unknown): Evidence[] {
           });
         }
       }
+    if (Array.isArray(e.procedures))
+      for (const p of e.procedures as Record<string, unknown>[])
+        push(p.source_ref, "procedure");
   }
   return out;
 }
@@ -205,6 +215,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
     const expertsBlock: Expert[] = [];
     const messagesBlock: MessageBlock[] = [];
     const blastBlock: BlastBlock[] = [];
+    const proceduresBlock: ProcedureBlock[] = [];
     let blastService = "";
     const seenSources = new Set<string>();
     if (Array.isArray(r.evidence))
@@ -239,6 +250,18 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
             });
           }
         }
+        if (Array.isArray(e.procedures))
+          for (const p of e.procedures as Record<string, unknown>[]) {
+            const steps = Array.isArray(p.steps)
+              ? (p.steps as unknown[]).map(String)
+              : [];
+            if (!steps.length) continue;
+            proceduresBlock.push({
+              title: String(p.title || "Procedure"),
+              steps,
+              source_ref: String(p.source_ref || ""),
+            });
+          }
         if (Array.isArray(e.messages))
           for (const m of e.messages as Record<string, unknown>[]) {
             const text = String(m.text || "");
@@ -272,6 +295,7 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
       messagesBlock,
       blastBlock,
       blastService,
+      proceduresBlock,
       scopeLabel,
     } as T;
   }
