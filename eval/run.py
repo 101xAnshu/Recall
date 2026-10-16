@@ -24,7 +24,7 @@ import app.agent as agent_mod
 from app import tools
 from eval.corpus import build_corpus
 
-EMBED_MODEL = "BAAI/bge-small-en-v1.5"
+EMBED_MODEL = os.getenv("EMBED_MODEL", "BAAI/bge-small-en-v1.5")
 CALL_GAP = 2.1
 TOP_K_DEFAULT = 5
 
