@@ -136,10 +136,10 @@ export function SidebarContent({
       <div className="flex flex-col p-4">
         <SidebarItem
           icon={GithubHIcon}
-          label="Connect GitHub"
+          label="GitHub"
           collapsed={collapsed}
           className="gap-2"
-          onClick={() => window.open("https://github.com", "_blank", "noreferrer")}
+          onClick={() => window.open("https://github.com/101xAnshu/Recall", "_blank", "noreferrer")}
         />
         <SidebarItem icon={HelpHIcon} label="Help and resource" collapsed={collapsed} className="gap-2" onClick={openHelp} />
       </div>
