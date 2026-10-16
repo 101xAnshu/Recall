@@ -4,3 +4,4 @@ falkordb
 groq
 fastembed
 langgraph
+mcp<2

@@ -17,6 +17,7 @@ from langgraph.checkpoint.memory import MemorySaver
 from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command, interrupt
 
+from app import mcp_client
 from app import tools
 from app.graph import FALLBACK_MESSAGE, USER_AGENT, user_graph_name
 
@@ -133,7 +134,7 @@ def retriever(state):
     user_id = state.get("user_id", "anshu")
     evidence, trace = [], []
     if intent == "why":
-        res = tools.trace_why(state.get("incident_id") or "INC-231")
+        res = mcp_client.trace_why(state.get("incident_id") or "INC-231")
         trace = res["trace"]
         evidence = [{"source": "org", "kind": "why-path",
                      "trace": p["trace"], "hops": p["hops"],
@@ -141,28 +142,28 @@ def retriever(state):
                      "dates": p.get("dates", []),
                      "evidence": p["evidence"]} for p in res["paths"]]
     elif intent in ("blast", "action"):
-        res = tools.blast_radius(state.get("service") or "Ledger")
+        res = mcp_client.blast_radius(state.get("service") or "Ledger")
         evidence = [{"source": "org", "kind": "blast-radius",
                      "service": res["service"],
                      "affected": res["affected"]}]
     elif intent == "who":
-        res = tools.who_knows(state.get("topic") or "payout-retry")
+        res = mcp_client.who_knows(state.get("topic") or "payout-retry")
         evidence = [{"source": "org", "kind": "who-knows",
                      "experts": res["experts"]}]
         if state.get("topic"):
-            msgs = tools.recall_messages(state.get("topic"))
+            msgs = mcp_client.recall_messages(state.get("topic"))
             evidence.append({"source": "org", "kind": "messages",
                              "messages": msgs["messages"]})
     elif intent == "procedure":
-        res = tools.recall_procedure(state.get("topic"))
+        res = mcp_client.recall_procedure(state.get("topic"))
         evidence = [{"source": "org", "kind": "procedures",
                      "procedures": res["procedures"]}]
     if scope in ("user-only", "both") and intent in ("memory", "unsupported"):
-        mem = tools.recall_memory(user_id)
+        mem = mcp_client.recall_memory(user_id)
         evidence.append({"source": user_graph_name(user_id), "kind": "memory",
                          "facts": mem["facts"]})
     elif scope == "both":
-        mem = tools.recall_memory(user_id)
+        mem = mcp_client.recall_memory(user_id)
         evidence.append({"source": user_graph_name(user_id), "kind": "memory",
                          "facts": mem["facts"]})
     return {"evidence": evidence, "trace": trace}
@@ -299,7 +300,7 @@ def _overlaps(question, texts):
 def _erasure_quote(question, user_id, fact_overlap):
     """Negative-recall proof: quote the receipt when the fact is erased."""
     try:
-        hist = tools.memory_history(user_id)
+        hist = mcp_client.memory_history(user_id)
     except Exception:
         return None
     for r in hist.get("receipts", []):
@@ -322,7 +323,7 @@ def plan_drafter(state):
         plan.append(f"Notify {r['owner_team']} about impact on {r['affected']}")
     plan.append(f"Apply change to {service}")
     plan.append("Verify all affected services report healthy")
-    res = tools.propose_action(goal, plan, state.get("user_id", "anshu"))
+    res = mcp_client.propose_action(goal, plan, state.get("user_id", "anshu"))
     return {"action_id": res["action_id"]}
 
 
@@ -344,10 +345,10 @@ def executor(state):
     """
     decision = state.get("decision", {}) or {}
     action_id = state["action_id"]
-    current = tools.get_action(action_id)
+    current = mcp_client.get_action(action_id)
     if current["status"] == "proposed":
-        tools.approve_action(action_id, decision.get("by", "anshu"))
-    done = tools.execute_action(action_id)
+        mcp_client.approve_action(action_id, decision.get("by", "anshu"))
+    done = mcp_client.execute_action(action_id)
     return {"decision": {**decision, "status": done["status"],
                          "executed_at": done.get("executed_at")}}
 
@@ -355,14 +356,14 @@ def executor(state):
 def record_rejection(state):
     """Record a rejection with the REJECTED_BY edge."""
     decision = state.get("decision", {}) or {}
-    res = tools.reject_action(state["action_id"], decision.get("by", "anshu"),
+    res = mcp_client.reject_action(state["action_id"], decision.get("by", "anshu"),
                               decision.get("reason", ""))
     return {"decision": {**decision, "status": res["status"]}}
 
 
 def audit_writer(state):
     """Attach the visible audit trail to the run."""
-    return {"audit": tools.audit_trail()["entries"]}
+    return {"audit": mcp_client.audit_trail()["entries"]}
 
 
 def _after_draft(state):
@@ -410,7 +411,7 @@ def run_ask(question, user_id, thread_id=None):
     if paused:
         payload = paused[0].value
         try:
-            node = tools.get_action(payload.get("action_id", ""))
+            node = mcp_client.get_action(payload.get("action_id", ""))
         except Exception:
             return dict(FALLBACK_ERROR, thread_id=thread_id)
         return {"pending_action": {"action_id": node["action_id"],
@@ -440,9 +441,9 @@ def resume_action(thread_id, decision):
         action_id = decision.get("action_id", "")
         by = decision.get("by", "anshu")
         if decision.get("decision") == "approved":
-            out = tools.approve_action(action_id, by)
+            out = mcp_client.approve_action(action_id, by)
         else:
-            out = tools.reject_action(action_id, by,
+            out = mcp_client.reject_action(action_id, by,
                                       decision.get("reason", ""))
         return {"action_id": out["action_id"], "status": out["status"],
-                "audit": tools.audit_trail()["entries"]}
+                "audit": mcp_client.audit_trail()["entries"]}
