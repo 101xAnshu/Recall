@@ -298,6 +298,13 @@ and one known product limitation, the blast tool does not return the
 queried service's own owner, so the ownership question about Ledger's team
 scores graph 0.0.
 
+Concurrency probe (local stack, template drafting, no Groq key in backend
+env): 50 concurrent mixed ask, remember, and blast-radius requests against
+`localhost:8000` completed 50/50 with p50 0.557s, p95 0.664s, zero duplicate
+fact ids across 10 concurrent remembers, and all 10 probe facts persisted
+under an isolated loadprobe user. Reproduce with
+`.venv/bin/python scripts/load_probe.py`.
+
 ## Data honesty
 
 Every node in every graph is synthetic (`source_type: synthetic`) per the
