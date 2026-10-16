@@ -55,6 +55,25 @@ def main():
     check("who-knows latest present",
           all(e["latest"] for e in who["evidence"][0]["experts"]))
 
+    para = call("POST", "/ask",
+               {"question": "What did the team say about the payout incident",
+                "user_id": "anshu"})
+    pmsgs = [e for e in para.get("evidence", []) if e.get("kind") == "messages"]
+    check("paraphrase returns message blocks",
+          len(pmsgs) > 0 and len(pmsgs[0].get("messages", [])) > 0
+          and all(m.get("author") for m in pmsgs[0].get("messages", [])),
+          str([(m.get("author"), m.get("at"))
+               for m in pmsgs[0].get("messages", [])][:3]))
+
+    hang = call("POST", "/ask", {"question": "What hangs off Payments?",
+                                 "user_id": "anshu"})
+    hnames = set()
+    for e in hang.get("evidence", []):
+        for r in e.get("affected", []):
+            hnames.add(r.get("affected") or r.get("service", ""))
+    check("blast paraphrase exact set",
+          hnames == {"Retry", "Notifications"}, str(hnames))
+
     proc = call("POST", "/ask",
                {"question": "How do we handle a payout-retry incident?",
                 "user_id": "anshu"})

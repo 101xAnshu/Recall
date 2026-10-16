@@ -30,6 +30,10 @@ WHY_WORDS = ("why", "caused", "cause", "root cause", "happen", "incident",
 BLAST_WORDS = ("blast", "break", "affect", "impact", "what if", "touch",
                 "depend", "downstream")
 WHO_WORDS = ("who knows", "expert", "owner", "who owns", "familiar")
+TOPIC_ALIASES = {
+    "payout incident": "payout-retry",
+    "payout retry": "payout-retry",
+}
 MEMORY_WORDS = ("remember", "recall", "forget", "forgot", "memory", "my ",
                 "current")
 STOPWORDS = {"what", "was", "were", "the", "about", "that", "this", "with",
@@ -91,12 +95,18 @@ def scope_resolver(state):
     service = next((s for s in names if s.lower() == changed_name), None)
     if service is None:
         service = next((s for s in names if s.lower() in low), None)
-    topic = next((t for t in _topic_names() if t.lower() in low), None)
-    if "payout" in low and topic is None and "payout-retry" in _topic_names():
+    topic_low = low
+    for alias, real in TOPIC_ALIASES.items():
+        if alias in topic_low:
+            topic_low = topic_low.replace(alias, real)
+    topic = next((t for t in _topic_names() if t.lower() in topic_low), None)
+    if "payout" in topic_low and topic is None and "payout-retry" in _topic_names():
         topic = "payout-retry"
 
     if low.startswith(("how do we", "how do i")):
         intent = "procedure"
+    elif re.search(r"\bwhat did\b.{0,24}\bsay\b", low) or "say about" in low:
+        intent = "messages"
     elif _has_any(low, WHY_WORDS) or incident:
         intent = "why"
     elif _has_any(low, BLAST_WORDS):
@@ -146,7 +156,7 @@ def retriever(state):
         evidence = [{"source": "org", "kind": "blast-radius",
                      "service": res["service"],
                      "affected": res["affected"]}]
-    elif intent == "who":
+    elif intent in ("who", "messages"):
         res = mcp_client.who_knows(state.get("topic") or "payout-retry")
         evidence = [{"source": "org", "kind": "who-knows",
                      "experts": res["experts"]}]
@@ -225,7 +235,7 @@ def _template_draft(state):
         refs = ", ".join(r.get("source_ref", "") for r in rows)
         return ("Changing this service affects: " + "; ".join(lines)
                 + ". Evidence: " + refs)
-    if intent == "who" and evidence:
+    if intent in ("who", "messages") and evidence:
         lines = []
         for e in evidence[0].get("experts", []):
             b = e["breakdown"]
