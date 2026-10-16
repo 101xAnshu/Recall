@@ -251,7 +251,8 @@ ORDER BY s DESC, at DESC LIMIT 10
 
 Everything. Remove the graph and the agent cannot answer a single
 question: every tool call fails, every endpoint degrades to the same
-honest message, and the UI shows it. The demo proves this live with the
+honest message on outage (bad input still returns specific errors),
+and the UI shows it. The demo proves this live with the
 kill-switch (topbar demo control, backed by admin endpoints): disconnect,
 ask the same question, get the fallback, reconnect, get the traced answer
 back.
@@ -268,7 +269,9 @@ The exact fallback message:
 
 30 questions, 5 categories, one-command runner (`eval/run.py`, also
 `POST /eval/run`). Flat RAG (fastembed chunks of the same corpus, top-5,
-same Groq model for drafting) versus graph traversal plus hybrid recall.
+same Groq model for drafting) versus pure Cypher graph traversal. No vector
+step exists in the product path; fastembed lives only in eval/ powering
+the flat-RAG baseline arm.
 Structured scoring per question: did the answer surface the required
 evidence. An LLM judge notes narration quality only.
 
