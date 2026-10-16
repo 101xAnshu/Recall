@@ -1,5 +1,11 @@
 # Recall - The Company That Remembers
 
+The company brain that shows its work.
+
+> What is real: the FalkorDB instance, the Groq calls, and the kill-switch
+> behavior are all real and live. Meridian Pay is fictional; every person,
+> incident, message, and decision in it is seeded test data.
+
 An institutional-memory agent for a fictional fintech, Meridian Pay. It
 connects incidents, ADRs, commits, services, teams, and people in FalkorDB;
 answers with traced graph paths; predicts blast radius; remembers and
