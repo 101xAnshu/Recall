@@ -94,7 +94,9 @@ def scope_resolver(state):
     if "payout" in low and topic is None and "payout-retry" in _topic_names():
         topic = "payout-retry"
 
-    if _has_any(low, WHY_WORDS) or incident:
+    if low.startswith(("how do we", "how do i")):
+        intent = "procedure"
+    elif _has_any(low, WHY_WORDS) or incident:
         intent = "why"
     elif _has_any(low, BLAST_WORDS):
         intent = "blast"
@@ -111,8 +113,8 @@ def scope_resolver(state):
 
     mentions_user = _has_any(low, MEMORY_WORDS + (" i ", " me ", " my "))
     mentions_org = bool(incident or service or topic or intent in
-                        ("why", "blast", "who", "action"))
-    if intent == "action":
+                        ("why", "blast", "who", "action", "procedure"))
+    if intent in ("action", "procedure"):
         scope = "org-only"
     elif mentions_user and mentions_org:
         scope = "both"
@@ -151,6 +153,10 @@ def retriever(state):
             msgs = tools.recall_messages(state.get("topic"))
             evidence.append({"source": "org", "kind": "messages",
                              "messages": msgs["messages"]})
+    elif intent == "procedure":
+        res = tools.recall_procedure(state.get("topic"))
+        evidence = [{"source": "org", "kind": "procedures",
+                     "procedures": res["procedures"]}]
     if scope in ("user-only", "both") and intent in ("memory", "unsupported"):
         mem = tools.recall_memory(user_id)
         evidence.append({"source": user_graph_name(user_id), "kind": "memory",
@@ -232,6 +238,19 @@ def _template_draft(state):
                     lines.append(
                         f"{m['author']} ({m['at']}): {m['text']}")
         return "\n".join(lines)
+    if intent == "procedure":
+        lines = []
+        for e in evidence:
+            if e.get("kind") == "procedures":
+                for p in e.get("procedures", []):
+                    lines.append(f"{p['title']}:")
+                    for n, step in enumerate(p.get("steps", []), 1):
+                        lines.append(f"{n}. {step}")
+                    lines.append(f"Evidence: {p['source_ref']}")
+        if lines:
+            return "\n".join(lines)
+        return ("I have no runbook for that yet. "
+                "Ask about payout-retry incidents.")
     if intent == "memory":
         facts = []
         for e in evidence:

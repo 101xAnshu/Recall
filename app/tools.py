@@ -161,6 +161,41 @@ def recall_messages(topic="payout-retry", limit=15):
 # Memory tools (per-user graphs)
 
 
+def recall_procedure(topic=None, limit=5):
+    """Procedures for a topic, or all procedures when no topic is given."""
+    if topic:
+        rows = _rows(
+            _org(),
+            "MATCH (pr:Procedure)-[:MENTIONS]->(t:Topic {name: $topic}) "
+            "RETURN pr.id AS procedure_id, pr.title AS title, "
+            "pr.steps AS steps, pr.source_ref AS source_ref "
+            "ORDER BY pr.id LIMIT $limit",
+            {"topic": topic, "limit": limit},
+        )
+    else:
+        rows = _rows(
+            _org(),
+            "MATCH (pr:Procedure) "
+            "RETURN pr.id AS procedure_id, pr.title AS title, "
+            "pr.steps AS steps, pr.source_ref AS source_ref "
+            "ORDER BY pr.id LIMIT $limit",
+            {"limit": limit},
+        )
+    procedures = []
+    for r in rows:
+        try:
+            steps = json.loads(r["steps"]) if r["steps"] else []
+        except (TypeError, ValueError):
+            steps = []
+        procedures.append({
+            "procedure_id": r["procedure_id"],
+            "title": r["title"],
+            "steps": steps if isinstance(steps, list) else [str(steps)],
+            "source_ref": r["source_ref"],
+        })
+    return {"topic": topic, "procedures": procedures}
+
+
 def recall_memory(user_id):
     """Current facts only (valid_until IS NULL). Erased facts are gone."""
     rows = _rows(
