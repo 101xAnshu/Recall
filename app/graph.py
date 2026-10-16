@@ -28,6 +28,12 @@ ORG_GRAPH = os.getenv("ORG_GRAPH", "org")
 # unreachable, so the outage coda records without stopping the container.
 SIMULATED_OUTAGE = False
 
+# File twin of the flag above. The MCP tool server runs in its own
+# process with its own module state, so the outage signal must live
+# somewhere both processes read on every call.
+OUTAGE_FILE = os.path.join(
+    os.path.dirname(os.path.dirname(os.path.abspath(__file__))), ".outage")
+
 
 def user_graph_name(user_id: str) -> str:
     return f"user_{user_id}"
@@ -35,6 +41,6 @@ def user_graph_name(user_id: str) -> str:
 
 def get_db():
     """Construct a FalkorDB client. Always call inside try/except."""
-    if SIMULATED_OUTAGE:
+    if SIMULATED_OUTAGE or os.path.exists(OUTAGE_FILE):
         raise ConnectionError("simulated outage (demo kill-switch)")
     return FalkorDB(host=FALKORDB_HOST, port=FALKORDB_PORT)

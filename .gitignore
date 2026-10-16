@@ -4,6 +4,9 @@ AGENTS.md
 # Secrets
 .env
 
+# Demo kill-switch flag (runtime only, never commit)
+.outage
+
 # Python
 __pycache__/
 *.pyc

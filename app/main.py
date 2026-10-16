@@ -5,6 +5,7 @@ unreachable. Unknown entities return honest 404 errors, never guesses.
 """
 
 import os
+from contextlib import asynccontextmanager
 
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
@@ -15,7 +16,17 @@ from app import agent as agent_loop
 from app import tools
 from app.graph import FALLBACK_MESSAGE, ORG_GRAPH, get_db
 
-app = FastAPI(title="Meridian Pay backend")
+
+@asynccontextmanager
+async def lifespan(app):
+    try:
+        os.remove(graph_mod.OUTAGE_FILE)
+    except OSError:
+        pass
+    yield
+
+
+app = FastAPI(title="Meridian Pay backend", lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -276,6 +287,10 @@ def memory_history(user_id: str = "anshu"):
 def admin_disconnect():
     """Demo kill-switch: simulate a FalkorDB outage without stopping it."""
     graph_mod.SIMULATED_OUTAGE = True
+    try:
+        open(graph_mod.OUTAGE_FILE, "w").close()
+    except OSError:
+        pass
     return {"falkordb": "down", "simulated": True}
 
 
@@ -283,6 +298,10 @@ def admin_disconnect():
 def admin_reconnect():
     """Demo kill-switch: restore FalkorDB connectivity."""
     graph_mod.SIMULATED_OUTAGE = False
+    try:
+        os.remove(graph_mod.OUTAGE_FILE)
+    except OSError:
+        pass
     try:
         get_db().select_graph(ORG_GRAPH).query("RETURN 1")
         return {"falkordb": "ok", "simulated": False}
