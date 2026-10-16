@@ -18,7 +18,7 @@ from langgraph.graph import END, START, StateGraph
 from langgraph.types import Command, interrupt
 
 from app import tools
-from app.graph import FALLBACK_MESSAGE, USER_AGENT
+from app.graph import FALLBACK_MESSAGE, USER_AGENT, user_graph_name
 
 PRIMARY_MODEL = "openai/gpt-oss-120b"
 
@@ -153,17 +153,13 @@ def retriever(state):
                              "messages": msgs["messages"]})
     if scope in ("user-only", "both") and intent in ("memory", "unsupported"):
         mem = tools.recall_memory(user_id)
-        evidence.append({"source": user_graph_label(user_id), "kind": "memory",
+        evidence.append({"source": user_graph_name(user_id), "kind": "memory",
                          "facts": mem["facts"]})
     elif scope == "both":
         mem = tools.recall_memory(user_id)
-        evidence.append({"source": user_graph_label(user_id), "kind": "memory",
+        evidence.append({"source": user_graph_name(user_id), "kind": "memory",
                          "facts": mem["facts"]})
     return {"evidence": evidence, "trace": trace}
-
-
-def user_graph_label(user_id):
-    return f"user_{user_id}"
 
 
 def _evidence_text(evidence):

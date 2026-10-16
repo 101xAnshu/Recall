@@ -38,8 +38,3 @@ def get_db():
     if SIMULATED_OUTAGE:
         raise ConnectionError("simulated outage (demo kill-switch)")
     return FalkorDB(host=FALKORDB_HOST, port=FALKORDB_PORT)
-
-
-def get_graph(graph_name: str):
-    """Select one graph by name. One graph per call, never cross-graph Cypher."""
-    return get_db().select_graph(graph_name)

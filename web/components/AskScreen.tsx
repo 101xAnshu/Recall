@@ -125,10 +125,12 @@ export default function AskScreen({
           <div key={runId}>
             <Card>
               <CardBody className="gap-3">
+                {resp.trace.length > 0 && (
                 <div className="flex items-start gap-1.5">
                   <FileHIcon aria-hidden className="text-info mt-[2px] size-3.5 shrink-0" />
                   <h3 className="min-w-0 flex-1">Traced answer</h3>
                 </div>
+                )}
                 {resp.scopeLabel && (
                   <div className="font-mono text-[11px] text-faint">
                     {resp.scopeLabel}

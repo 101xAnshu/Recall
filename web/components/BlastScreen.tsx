@@ -14,7 +14,6 @@ import {
   LedgerHIcon,
   NotificationsHIcon,
   PaymentsHIcon,
-  ReliabilityHIcon,
   RetryHIcon,
   SettlementHIcon,
 } from "@/components/icons";
@@ -31,9 +30,8 @@ const SERVICE_ICONS: Record<string, IconComponent> = {
 };
 
 const TEAM_ICONS: Record<string, IconComponent> = {
-  payments: PaymentsHIcon,
-  reliability: ReliabilityHIcon,
-  growth: GrowthHIcon,
+  "Payments-team": PaymentsHIcon,
+  "Growth-team": GrowthHIcon,
 };
 
 function Tile({ label, value, tone }: { label: string; value: number | string; tone?: string }) {

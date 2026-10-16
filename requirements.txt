@@ -4,4 +4,3 @@ falkordb
 groq
 fastembed
 langgraph
-python-dotenv
