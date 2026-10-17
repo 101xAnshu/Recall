@@ -1,25 +1,26 @@
 "use client";
 
 import { ApprovalHIcon, LedgerHIcon, MemoryHIcon } from "@/components/icons";
-import { Eyebrow, Lead, Section, SectionTitle } from "./section";
-import { Reveal } from "./reveal";
 import type { IconComponent } from "@/components/_common/huge-icon";
+import { Eyebrow, Lead, Section, SectionTitle, TYPE } from "./section";
+import { Reveal } from "./motion";
+import { cn } from "@/lib/utils";
 
 const PILLARS: { icon: IconComponent; title: string; body: string }[] = [
   {
     icon: LedgerHIcon,
     title: "Answers with proof",
-    body: "Every claim cites its graph path: incident to pull request, ADR to commit, message to author. Ask why and the answer arrives as a traced chain, not a paragraph.",
+    body: "Ask why an incident happened, what breaks if a service changes, or who knows the system best. Every answer traces its path through the graph and cites its sources. Every claim carries the evidence behind it.",
   },
   {
     icon: MemoryHIcon,
     title: "Memory that respects people",
-    body: "One isolated graph per employee. New facts supersede old ones with history intact, and forgetting writes an erasure receipt you can verify against negative recall.",
+    body: "Each person gets their own memory graph. Facts can be superseded when they change, or forgotten entirely with an erasure receipt. The past is versioned, never rewritten.",
   },
   {
     icon: ApprovalHIcon,
     title: "Acts only with permission",
-    body: "The agent can propose a migration, never perform one blind. Blast radius picks the services, a human approves, and every decision lands in an audit trail.",
+    body: "The agent drafts a plan and stops. Nothing executes until a human approves. Every approval and execution lands in an audit trail.",
   },
 ];
 
@@ -30,7 +31,7 @@ export default function Pillars() {
         <div className="flex flex-col gap-3">
           <Eyebrow>What it does</Eyebrow>
           <SectionTitle>Three promises, kept structurally</SectionTitle>
-          <Lead className="mt-1 max-w-[58ch]">
+          <Lead className="mt-1">
             None of these are prompt instructions. Each one is enforced by the
             data model, so the model cannot quietly skip it.
           </Lead>
@@ -44,10 +45,8 @@ export default function Pillars() {
               <span className="bg-secondary flex size-9 items-center justify-center rounded-[10px]">
                 <pillar.icon aria-hidden className="text-foreground size-4" />
               </span>
-              <h3 className="font-display mt-1 text-[17px] leading-[125%] font-semibold tracking-[-0.03em]">
-                {pillar.title}
-              </h3>
-              <p className="text-muted-foreground text-[14px] leading-[160%] font-medium tracking-[-0.02em]">
+              <h3 className={cn(TYPE.sub, "mt-1 text-balance")}>{pillar.title}</h3>
+              <p className={cn(TYPE.body, "text-muted-foreground text-pretty")}>
                 {pillar.body}
               </p>
             </article>
