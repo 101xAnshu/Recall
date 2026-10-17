@@ -55,6 +55,11 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     ([, slug]) => slug === seg
   );
   const nav: NavId = found ? found[0] : "ask";
+  // The landing page is standalone: no sidebar, no header, no employee switcher.
+  // Mounting that chrome behind a full-viewport overlay leaves it in the DOM,
+  // where it can still be tabbed to, read by a screen reader, or caught by a
+  // text selection dragging across the translucent navbar.
+  const isLanding = seg === "";
   const [user, setUser] = useState("anshu");
   const [health, setHealth] = useState<"ok" | "down">("ok");
   const [toggling, setToggling] = useState(false);
@@ -62,6 +67,8 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const toggleSidebarCollapsed = useUiStore((state) => state.toggleSidebarCollapsed);
 
   useEffect(() => {
+    // No health polling behind the landing page: nothing there shows it.
+    if (isLanding) return;
     const check = async () => {
       try {
         const h = await api<{ falkordb: "ok" | "down" }>("/health");
@@ -73,7 +80,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     check();
     const t = setInterval(check, 5000);
     return () => clearInterval(t);
-  }, []);
+  }, [isLanding]);
 
   const mainRef = useRef<HTMLElement>(null);
 
@@ -99,6 +106,11 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   const go = (id: NavId) => {
     router.push("/" + SLUG[id]);
   };
+
+  // After every hook, so hook order is identical on both branches.
+  if (isLanding) {
+    return <>{children}</>;
+  }
 
   return (
     <ShellCtx.Provider value={{ user, graphDown: health === "down" }}>

@@ -17,14 +17,16 @@ export const metadata: Metadata = {
 export default function Home() {
   return (
     <LandingFrame>
-      <main>
+      {/* A div, not a <main>: the app shell already renders the document's
+          single <main>, and nesting a second one is invalid HTML. */}
+      <div>
         <Hero />
         <Demo />
         <Pillars />
         <Proof />
         <Honesty />
         <Faq />
-      </main>
+      </div>
       <LandingFooter />
     </LandingFrame>
   );
