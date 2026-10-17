@@ -24,7 +24,7 @@ This is one entry across all three tracks:
 - **Track 3 - Company Brain:** ownership, expertise ranking, decision
   provenance, and every answer carrying traced paths plus sources.
 
-Demo video: [VIDEO_URL]
+Demo video: https://youtu.be/F9H5nxtCiow
 
 ## Problem
 

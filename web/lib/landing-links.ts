@@ -1,9 +1,9 @@
 export const REPO_URL = "https://github.com/101xAnshu/Recall";
 
-// Paste the published demo video URL here. Until this holds a real YouTube
-// link the hero button scrolls to the on-page player and the player shows a
-// placeholder plate instead of a dead iframe.
-export const YOUTUBE_URL = "PASTE_URL_HERE";
+// Published demo video. The hero and navbar buttons open this on YouTube and
+// the page embeds it via the id derived below, so this is the single canonical
+// link for the video across the app and the README.
+export const YOUTUBE_URL = "https://youtu.be/F9H5nxtCiow";
 
 export function youtubeVideoId(url: string): string | null {
   const patterns = [
