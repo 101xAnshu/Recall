@@ -16,6 +16,11 @@ __pycache__/
 node_modules/
 .next/
 next-env.d.ts
+web/tsconfig.tsbuildinfo
+
+# Full-size source artwork for the demo poster. The optimized, web-ready copy
+# is committed as web/public/demo-poster.jpg.
+web/public/Recall_Thumbnail.png
 
 # OS
 .DS_Store
