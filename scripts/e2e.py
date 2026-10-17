@@ -87,12 +87,22 @@ def main():
 
     mem = call("POST", "/ask", {"question": "What do I remember?",
                                 "user_id": "anshu"})
+    # Scope, not exact fact ids: a supersede demo rotates the fact head,
+    # so ids move while per-user isolation must hold.
+    mem_refs = [f.get("source_ref", "")
+                for e in mem.get("evidence", []) if e.get("kind") == "memory"
+                for f in e.get("facts", [])]
     check("tenant memory isolated",
-          "Ledger freeze ends Friday" in mem["answer"], mem["answer"][:120])
+          any("users/anshu/" in r for r in mem_refs)
+          and not any("users/priya/" in r for r in mem_refs), str(mem_refs))
     mem_p = call("POST", "/ask", {"question": "What do I remember?",
                                   "user_id": "priya"})
+    mem_p_refs = [f.get("source_ref", "")
+                  for e in mem_p.get("evidence", []) if e.get("kind") == "memory"
+                  for f in e.get("facts", [])]
     check("priya sees her own fact",
-          "Retry deploy window" in mem_p["answer"], mem_p["answer"][:120])
+          any("users/priya/" in r for r in mem_p_refs)
+          and not any("users/anshu/" in r for r in mem_p_refs), str(mem_p_refs))
 
     rem = call("POST", "/memory/remember",
                {"user_id": "anshu", "text": "E2E probe fact alpha",
