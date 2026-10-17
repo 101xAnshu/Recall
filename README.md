@@ -297,11 +297,18 @@ is a static snapshot taken before the eval mutations (supersede, forget),
 modeling a periodically reindexed baseline; the graph arm reads live data.
 The scorer folds Unicode dashes and spaces to ASCII before matching,
 applied equally to both arms (the LLM's typography, not tuning). The
-question set was frozen before the final run. Remaining zeros are
-reported, not hidden: strict-phrase misses both arms accept (blast-04),
-and one known product limitation, the blast tool does not return the
-queried service's own owner, so the ownership question about Ledger's team
-scores graph 0.0.
+question set was frozen before the final run.
+
+Shortfall, stated in full rather than as a tidy story: the graph arm scored
+24.667 of 30, so it lost 5.333 points, not two. Scores are partial credit, not
+whole-question pass or fail, which is why a category total can be fractional.
+Two of those losses are hard zeros. One is blast-04, a strict-phrase miss both
+arms incur. The other is a known product limitation: the blast tool does not
+return the queried service's own owner, so the ownership question about
+Ledger's team scores graph 0.0. The remaining 3.333 points are partial-credit
+losses spread across Causal why (1.333 lost of 10) and Memory (2.0 lost of 4,
+the weakest category in the run). Flat RAG lost 10.749 of 30 on the same
+questions.
 
 Concurrency probe (local stack, template drafting, no Groq key in backend
 env): 50 concurrent mixed ask, remember, and blast-radius requests against
