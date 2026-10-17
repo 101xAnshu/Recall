@@ -216,10 +216,14 @@ export default function Proof() {
       </Reveal>
 
       <Reveal delay={0.12}>
-        <p className={cn(TYPE.body, "text-muted-foreground mt-4 max-w-[72ch] text-pretty")}>
-          Thirty questions, same corpus, same Groq model, same scoring. The RAG index is a
-          static snapshot taken before the memory mutations while the graph arm
-          reads live data. Remaining zeros are reported in the repo, not hidden.
+        <p className={cn(TYPE.body, "text-muted-foreground mt-4 max-w-[92ch] text-pretty")}>
+          Thirty questions, same corpus, same Groq model, same scoring. Scores are
+          partial credit, not pass or fail, so the graph arm lost 5.333 points, not
+          two. Two are hard zeros: a strict-phrase miss both arms share, and a known
+          limitation where blast radius omits the service&apos;s own owner. The rest is
+          partial-credit loss, worst in Memory. The RAG index is a static snapshot
+          taken before the memory mutations while the graph arm reads live data.
+          Full breakdown in the repo, not hidden.
         </p>
       </Reveal>
     </Section>
