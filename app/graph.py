@@ -22,6 +22,13 @@ USER_AGENT = "MeridianPay/1.0 (+local)"
 
 FALKORDB_HOST = os.getenv("FALKORDB_HOST", "localhost")
 FALKORDB_PORT = int(os.getenv("FALKORDB_PORT", "6379"))
+
+# Hosted instances (for example FalkorDB Cloud) require AUTH. When both
+# variables are unset no credentials are sent, so the local default path
+# is unchanged.
+FALKORDB_USERNAME = os.getenv("FALKORDB_USERNAME", "")
+FALKORDB_PASSWORD = os.getenv("FALKORDB_PASSWORD", "")
+
 ORG_GRAPH = os.getenv("ORG_GRAPH", "org")
 
 # Demo kill-switch: when True the app behaves as if FalkorDB is
@@ -43,4 +50,9 @@ def get_db():
     """Construct a FalkorDB client. Always call inside try/except."""
     if SIMULATED_OUTAGE or os.path.exists(OUTAGE_FILE):
         raise ConnectionError("simulated outage (demo kill-switch)")
-    return FalkorDB(host=FALKORDB_HOST, port=FALKORDB_PORT)
+    kwargs = {"host": FALKORDB_HOST, "port": FALKORDB_PORT}
+    if FALKORDB_USERNAME:
+        kwargs["username"] = FALKORDB_USERNAME
+    if FALKORDB_PASSWORD:
+        kwargs["password"] = FALKORDB_PASSWORD
+    return FalkorDB(**kwargs)
