@@ -1,8 +1,9 @@
-// Live API client for the Meridian Pay backend (http://localhost:8000).
+// Live API client for the Meridian Pay backend. The base URL is inlined
+// from NEXT_PUBLIC_API_URL at build time (localhost:8000 when unset).
 // Same call signature the screens were built against. Every response is
 // adapted from live backend shapes to screen shapes. No mock data.
 
-const BASE = "http://localhost:8000";
+const BASE = process.env.NEXT_PUBLIC_API_URL || "http://localhost:8000";
 
 export type Trace = { from: string; to: string; edge: string };
 export type Evidence = {

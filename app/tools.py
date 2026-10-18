@@ -77,7 +77,12 @@ def trace_why(incident_id="INC-231"):
 
 
 def blast_radius(service="Ledger"):
-    """Dependents of a service via incoming DEPENDS_ON (CALL UNION shape)."""
+    """Dependents of a service via incoming DEPENDS_ON (CALL UNION shape).
+
+    The WITH materializes the CALL output before the OWNS join. Without
+    it the cloud enterprise build rebinds svc inside the post-CALL
+    pattern and returns every owned service instead of the dependents.
+    """
     known = _rows(
         _org(), "MATCH (s:Service {name: $service}) RETURN s.name AS name",
         {"service": service},
@@ -91,6 +96,7 @@ def blast_radius(service="Ledger"):
         "RETURN d AS svc, length(p) AS hops UNION WITH s "
         "MATCH p = (s)-[:AFFECTS*1..3]->(a:Service) "
         "RETURN a AS svc, length(p) AS hops } "
+        "WITH svc, hops "
         "MATCH (t:Team)-[:OWNS]->(svc) "
         "RETURN svc.name AS affected, t.name AS owner_team, "
         "svc.source_ref AS source_ref, min(hops) AS hops "
