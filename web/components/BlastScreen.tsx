@@ -83,6 +83,17 @@ export default function BlastScreen({ graphDown = false }: { graphDown?: boolean
     load(svc);
   }, []);
 
+  // Reconnect: refresh rows so the tiles never show pre-outage data
+  // after the badge flips back to connected.
+  const firstPoll = useRef(true);
+  useEffect(() => {
+    if (firstPoll.current) {
+      firstPoll.current = false;
+      return;
+    }
+    if (!graphDown) load(svc);
+  }, [graphDown]);
+
   const chip = buttonVariants({ variant: "chip", size: "md" });
   const teams = new Set(rows.map((r) => r.owner_team)).size;
   const depth = rows.reduce((m, r) => Math.max(m, r.hops), 0);

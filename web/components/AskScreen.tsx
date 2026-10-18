@@ -5,6 +5,7 @@ import { api, channelOf, shortDate, shortRef, type AskResp } from "../lib/api";
 import { Card, CardBody, CardFooter } from "../components/card";
 import { AnswerSkeleton } from "../components/skeleton";
 import Button from "../components/_ui/button";
+import Spinner from "./_ui/spinner";
 import { Input } from "../components/_ui/form/input";
 import { FileHIcon, SearchHIcon, ArrowRightHIcon } from "@/components/icons";
 
@@ -91,9 +92,11 @@ export default function AskScreen({
               variant="primary"
               size="lg"
               onClick={() => run(q)}
+              disabled={loading}
               aria-busy={loading}
-              className="w-[76px] shrink-0"
+              className="min-w-[76px] shrink-0"
             >
+              {loading && <Spinner />}
               Ask
             </Button>
           </div>
@@ -105,6 +108,7 @@ export default function AskScreen({
               variant="chip"
               size="sm"
               data-active={q === s}
+              disabled={loading}
               onMouseDown={(e) => e.preventDefault()}
               onClick={() => run(s)}
             >

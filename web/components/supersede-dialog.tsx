@@ -4,6 +4,7 @@ import { useEffect, useRef, useState } from "react";
 import { createPortal } from "react-dom";
 import { AnimatePresence, motion, useReducedMotion } from "motion/react";
 import Button from "@/components/_ui/button";
+import Spinner from "@/components/_ui/spinner";
 import { Input } from "@/components/_ui/form/input";
 import { ease } from "@/lib/easings";
 import { useMounted } from "@/hooks/use-mounted";
@@ -142,10 +143,11 @@ export default function SupersedeDialog({
               <Button
                 variant="primary"
                 size="md"
-                disabled={!canSave}
+                disabled={!canSave || busy}
                 aria-busy={busy}
                 onClick={() => onSubmit(trimmed)}
               >
+                {busy && <Spinner />}
                 Save replacement
               </Button>
             </div>

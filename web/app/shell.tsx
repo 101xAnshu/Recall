@@ -6,6 +6,7 @@ import { createContext, useContext, useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 import Sidebar, { NAV } from "../components/sidebar";
 import Button from "../components/_ui/button";
+import Spinner from "../components/_ui/spinner";
 import { useUiStore, type NavId } from "../stores/ui-store";
 import { cn } from "../lib/utils";
 import {
@@ -145,12 +146,22 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                 disabled={toggling}
                 title="Demo control: simulate a FalkorDB outage and recovery"
                 onClick={async () => {
+                  if (toggling) return;
+                  const toDown = health === "ok";
                   setToggling(true);
                   try {
-                    await api(
-                      health === "ok" ? "/admin/disconnect" : "/admin/reconnect",
+                    // The admin response is instant feedback; the health
+                    // poll below is the source of truth for the badge.
+                    const r = await api<{ falkordb: "ok" | "down" }>(
+                      toDown ? "/admin/disconnect" : "/admin/reconnect",
                       { method: "POST" }
                     );
+                    setHealth(r.falkordb);
+                  } catch {
+                    // Fall through to the poll: a failed toggle call must
+                    // never paint the badge without checking reality first.
+                  }
+                  try {
                     const h = await api<{ falkordb: "ok" | "down" }>("/health");
                     setHealth(h.falkordb);
                   } catch {
@@ -161,7 +172,14 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                 }}
                 className="hidden sm:inline-flex"
               >
-                {health === "ok" ? "Demo: disconnect FalkorDB" : "Demo: reconnect FalkorDB"}
+                {toggling && <Spinner />}
+                {health === "ok"
+                  ? toggling
+                    ? "Disconnecting..."
+                    : "Demo: disconnect FalkorDB"
+                  : toggling
+                    ? "Reconnecting..."
+                    : "Demo: reconnect FalkorDB"}
               </Button>
               <span
                 className={cn(

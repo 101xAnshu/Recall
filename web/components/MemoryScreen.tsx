@@ -7,6 +7,7 @@ import Button from "../components/_ui/button";
 import { Input } from "../components/_ui/form/input";
 import { cn } from "../lib/utils";
 import { UserHIcon, ArrowRightHIcon } from "@/components/icons";
+import Spinner from "./_ui/spinner";
 import SupersedeDialog from "@/components/supersede-dialog";
 
 type Fact = {
@@ -54,6 +55,17 @@ export default function MemoryScreen({
     setReceipt(null);
     refresh(history);
   }, [user, history]);
+
+  // Reconnect: refresh facts so memory written before the outage does
+  // not stick on screen as missing.
+  const firstPoll = useRef(true);
+  useEffect(() => {
+    if (firstPoll.current) {
+      firstPoll.current = false;
+      return;
+    }
+    if (!graphDown) refresh(history);
+  }, [graphDown]);
 
   const failNotice = (err: unknown) =>
     graphDown
@@ -139,10 +151,12 @@ export default function MemoryScreen({
               variant="primary"
               size="lg"
               onClick={remember}
+              disabled={busy}
               aria-busy={busy}
               onMouseDown={(e) => e.preventDefault()}
               className="shrink-0"
             >
+              {busy && <Spinner />}
               Remember
             </Button>
           </div>
@@ -227,10 +241,11 @@ export default function MemoryScreen({
                   </div>
                   {!f.valid_until && (
                     <div className="border-card-border flex flex-wrap items-center gap-2 border-t p-4">
-                      <Button variant="chip" size="md" onClick={() => supersede(f)}>
+                      <Button variant="chip" size="md" disabled={busy} onClick={() => supersede(f)}>
                         Supersede
                       </Button>
-                      <Button variant="danger" size="md" onClick={() => forget(f)}>
+                      <Button variant="danger" size="md" disabled={busy} onClick={() => forget(f)}>
+                        {busy && <Spinner />}
                         Forget
                       </Button>
                     </div>

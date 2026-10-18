@@ -1,9 +1,10 @@
 "use client";
-import { useRef, useState } from "react";
+import { useEffect, useRef, useState } from "react";
 import { api } from "../lib/api";
 import { Card, CardBody } from "../components/card";
 import { RowsSkeleton } from "../components/skeleton";
 import Button, { buttonVariants } from "../components/_ui/button";
+import Spinner from "./_ui/spinner";
 import { Input } from "../components/_ui/form/input";
 import { cn } from "../lib/utils";
 import { CalendarHIcon, SearchHIcon, UserHIcon } from "@/components/icons";
@@ -35,8 +36,8 @@ export default function WhoKnowsScreen({ graphDown = false }: { graphDown?: bool
   const [loading, setLoading] = useState(false);
   const reqId = useRef(0);
 
-  const run = async () => {
-    const text = topic.trim();
+  const run = async (preset?: string) => {
+    const text = (preset ?? topic).trim();
     if (!text || loading) return;
     const id = ++reqId.current;
     setLoading(true);
@@ -54,6 +55,17 @@ export default function WhoKnowsScreen({ graphDown = false }: { graphDown?: bool
     setRan(true);
     setLoading(false);
   };
+
+  // Reconnect: re-run the last search so a miss recorded during the
+  // outage retries itself instead of sticking on screen.
+  const firstPoll = useRef(true);
+  useEffect(() => {
+    if (firstPoll.current) {
+      firstPoll.current = false;
+      return;
+    }
+    if (!graphDown && searched) run(searched);
+  }, [graphDown]);
 
   const chip = buttonVariants({ variant: "chip", size: "md" });
   const max = experts.reduce((m, e) => Math.max(m, e.score), 0.1);
@@ -81,10 +93,12 @@ export default function WhoKnowsScreen({ graphDown = false }: { graphDown?: bool
             <Button
               variant="primary"
               size="lg"
-              onClick={run}
+              onClick={() => run()}
+              disabled={loading}
               aria-busy={loading}
-              className="w-[76px] shrink-0"
+              className="min-w-[76px] shrink-0"
             >
+              {loading && <Spinner />}
               Find
             </Button>
           </div>

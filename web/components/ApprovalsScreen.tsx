@@ -4,6 +4,7 @@ import { api } from "../lib/api";
 import { Card, CardBody } from "../components/card";
 import { RowsSkeleton } from "../components/skeleton";
 import Button from "../components/_ui/button";
+import Spinner from "./_ui/spinner";
 import { Input } from "../components/_ui/form/input";
 import { cn } from "../lib/utils";
 import { ApprovalHIcon, PlusHIcon } from "@/components/icons";
@@ -33,6 +34,7 @@ export default function ApprovalsScreen({
   const [reason, setReason] = useState("");
   const [booted, setBooted] = useState(false);
   const [acting, setActing] = useState<string | null>(null);
+  const [proposing, setProposing] = useState(false);
   const [notice, setNotice] = useState("");
   const reqId = useRef(0);
 
@@ -53,21 +55,35 @@ export default function ApprovalsScreen({
     refresh();
   }, []);
 
+  // Reconnect: refresh the list so approvals decided before the outage
+  // do not stick on screen as pending.
+  const firstPoll = useRef(true);
+  useEffect(() => {
+    if (firstPoll.current) {
+      firstPoll.current = false;
+      return;
+    }
+    if (!graphDown) refresh();
+  }, [graphDown]);
+
   const failNotice = (err: unknown) =>
     graphDown
       ? "FalkorDB is disconnected, this change was not saved."
       : String((err as Error)?.message || err || "Request failed.");
 
   const propose = async () => {
-    if (!goal.trim()) return;
+    if (!goal.trim() || proposing) return;
+    setProposing(true);
     setNotice("");
     try {
       await api("/actions/propose", { method: "POST", body: JSON.stringify({ goal: goal.trim() }) });
       setGoal("");
     } catch (err) {
       setNotice(failNotice(err));
+      setProposing(false);
       return;
     }
+    setProposing(false);
     refresh();
   };
   const act = async (actionId: string, path: string, body: object) => {
@@ -95,10 +111,12 @@ export default function ApprovalsScreen({
               variant="primary"
               size="lg"
               onClick={propose}
+              disabled={proposing}
+              aria-busy={proposing}
               onMouseDown={(e) => e.preventDefault()}
               className="shrink-0"
             >
-              <PlusHIcon aria-hidden className="size-3.5" />
+              {proposing ? <Spinner /> : <PlusHIcon aria-hidden className="size-3.5" />}
               Propose
             </Button>
           </div>
@@ -169,9 +187,11 @@ export default function ApprovalsScreen({
                     <Button
                       variant="primary"
                       size="md"
+                      disabled={acting !== null}
                       aria-busy={acting === a.id}
                       onClick={() => act(a.id, "/actions/approve", { action_id: a.id, user_id: user })}
                     >
+                      {acting === a.id && <Spinner />}
                       Approve
                     </Button>
                     <Input
@@ -184,11 +204,13 @@ export default function ApprovalsScreen({
                     <Button
                       variant="secondary"
                       size="md"
+                      disabled={acting !== null}
                       aria-busy={acting === a.id}
                       onClick={() =>
                         act(a.id, "/actions/reject", { action_id: a.id, reason, user_id: user })
                       }
                     >
+                      {acting === a.id && <Spinner />}
                       Reject
                     </Button>
                   </div>
@@ -267,11 +289,13 @@ export default function ApprovalsScreen({
                           <Button
                             variant="secondary"
                             size="sm"
+                            disabled={acting !== null}
                             aria-busy={acting === e.id}
                             onClick={() =>
                               act(e.id, "/actions/execute", { action_id: e.id })
                             }
                           >
+                            {acting === e.id && <Spinner />}
                             Execute
                           </Button>
                         </div>
