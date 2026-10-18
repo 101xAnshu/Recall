@@ -18,6 +18,9 @@ node_modules/
 next-env.d.ts
 web/tsconfig.tsbuildinfo
 
+# Vercel CLI project link (created by vercel link)
+.vercel/
+
 # Full-size source artwork for the demo poster. The optimized, web-ready copy
 # is committed as web/public/demo-poster.jpg.
 web/public/Recall_Thumbnail.png
