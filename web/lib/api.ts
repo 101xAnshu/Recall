@@ -182,6 +182,9 @@ export async function api<T>(path: string, init?: RequestInit): Promise<T> {
       method: m,
       headers: { "Content-Type": "application/json" },
       body: b === undefined ? undefined : JSON.stringify(b),
+      // Health and status reads must never come from any HTTP cache:
+      // a stale "down" would stick the badge red while Ask works.
+      cache: "no-store",
     });
     return res.json();
   };

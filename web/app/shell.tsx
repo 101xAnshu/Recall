@@ -74,8 +74,18 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       try {
         const h = await api<{ falkordb: "ok" | "down" }>("/health");
         setHealth(h.falkordb);
-      } catch {
-        setHealth("down");
+      } catch (err) {
+        // One retry before painting red: Render free instances can drop
+        // a single request while waking, and that blip must not stick.
+        console.warn("health check failed, retrying", err);
+        await new Promise((r) => setTimeout(r, 2000));
+        try {
+          const h = await api<{ falkordb: "ok" | "down" }>("/health");
+          setHealth(h.falkordb);
+        } catch (err2) {
+          console.warn("health retry failed", err2);
+          setHealth("down");
+        }
       }
     };
     check();
