@@ -109,6 +109,17 @@ def health():
         return {"falkordb": "down"}
 
 
+@app.get("/status")
+def status():
+    """Benign-path alias of /health with the identical payload.
+
+    Some privacy blockers kill any request shaped like a telemetry ping
+    (a bare GET to .../health), which would strand the frontend badge.
+    The shell polls this path instead.
+    """
+    return health()
+
+
 @app.get("/")
 def root():
     return {"service": "meridian-pay", "docs": "/docs"}

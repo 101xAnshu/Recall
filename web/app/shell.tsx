@@ -78,7 +78,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
       // not the same as "the backend says it is down". Paint unknown and
       // keep the last confirmed state instead of lying red.
       try {
-        const h = await api<{ falkordb: "ok" | "down" }>("/health");
+        const h = await api<{ falkordb: "ok" | "down" }>("/status");
         setHealth(h.falkordb);
       } catch (err) {
         // One retry before giving up: Render free instances can drop
@@ -86,7 +86,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
         console.warn("health check failed, retrying", err);
         await new Promise((r) => setTimeout(r, 2000));
         try {
-          const h = await api<{ falkordb: "ok" | "down" }>("/health");
+          const h = await api<{ falkordb: "ok" | "down" }>("/status");
           setHealth(h.falkordb);
         } catch (err2) {
           console.warn("health retry failed", err2);
@@ -182,7 +182,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                     // never paint the badge without checking reality first.
                   }
                   try {
-                    const h = await api<{ falkordb: "ok" | "down" }>("/health");
+                    const h = await api<{ falkordb: "ok" | "down" }>("/status");
                     setHealth(h.falkordb);
                   } catch {
                     // Unknown, not down: the toggle may well have worked
