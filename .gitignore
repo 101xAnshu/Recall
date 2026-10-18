@@ -27,3 +27,4 @@ web/public/Recall_Thumbnail.png
 
 # OS
 .DS_Store
+.vercel
