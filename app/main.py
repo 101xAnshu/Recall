@@ -297,7 +297,11 @@ def admin_disconnect():
         open(graph_mod.OUTAGE_FILE, "w").close()
     except OSError:
         pass
-    return {"falkordb": "down", "simulated": True}
+    # The file is the cross-process outage signal: every endpoint reads
+    # it through get_db(). Confirm it stuck so the response can never
+    # claim "down" while the flag disagrees with what /health will read.
+    persisted = os.path.exists(graph_mod.OUTAGE_FILE)
+    return {"falkordb": "down", "simulated": True, "persisted": persisted}
 
 
 @app.post("/admin/reconnect")
@@ -308,8 +312,11 @@ def admin_reconnect():
         os.remove(graph_mod.OUTAGE_FILE)
     except OSError:
         pass
+    # Confirm the signal actually cleared. If the file survived, the
+    # outage is still on and the response must say so.
+    cleared = not os.path.exists(graph_mod.OUTAGE_FILE)
     try:
         get_db().select_graph(ORG_GRAPH).query("RETURN 1")
-        return {"falkordb": "ok", "simulated": False}
+        return {"falkordb": "ok", "simulated": not cleared}
     except Exception:
-        return {"falkordb": "down", "simulated": False}
+        return {"falkordb": "down", "simulated": not cleared}
