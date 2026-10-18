@@ -31,10 +31,13 @@ const TITLES: Record<NavId, string> = {
   memory: "Memory",
 };
 
+type Health = "ok" | "down" | "unknown";
+
 const ShellCtx = createContext<{
   user: string;
   graphDown: boolean;
-}>({ user: "anshu", graphDown: false });
+  health: Health;
+}>({ user: "anshu", graphDown: false, health: "ok" });
 
 export function useShell() {
   return useContext(ShellCtx);
@@ -62,7 +65,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   // text selection dragging across the translucent navbar.
   const isLanding = seg === "";
   const [user, setUser] = useState("anshu");
-  const [health, setHealth] = useState<"ok" | "down">("ok");
+  const [health, setHealth] = useState<Health>("ok");
   const [toggling, setToggling] = useState(false);
   const setSidebarOpen = useUiStore((state) => state.setSidebarOpen);
   const toggleSidebarCollapsed = useUiStore((state) => state.toggleSidebarCollapsed);
@@ -71,11 +74,14 @@ export default function Shell({ children }: { children: React.ReactNode }) {
     // No health polling behind the landing page: nothing there shows it.
     if (isLanding) return;
     const check = async () => {
+      // A failed request means "we could not reach the backend", which is
+      // not the same as "the backend says it is down". Paint unknown and
+      // keep the last confirmed state instead of lying red.
       try {
         const h = await api<{ falkordb: "ok" | "down" }>("/health");
         setHealth(h.falkordb);
       } catch (err) {
-        // One retry before painting red: Render free instances can drop
+        // One retry before giving up: Render free instances can drop
         // a single request while waking, and that blip must not stick.
         console.warn("health check failed, retrying", err);
         await new Promise((r) => setTimeout(r, 2000));
@@ -84,12 +90,16 @@ export default function Shell({ children }: { children: React.ReactNode }) {
           setHealth(h.falkordb);
         } catch (err2) {
           console.warn("health retry failed", err2);
-          setHealth("down");
+          setHealth("unknown");
         }
       }
     };
     check();
-    const t = setInterval(check, 5000);
+    // Slow tick, and no ticks from background tabs: stale failures from
+    // throttled tabs must never overwrite the visible state.
+    const t = setInterval(() => {
+      if (!document.hidden) check();
+    }, 15000);
     return () => clearInterval(t);
   }, [isLanding]);
 
@@ -124,7 +134,7 @@ export default function Shell({ children }: { children: React.ReactNode }) {
   }
 
   return (
-    <ShellCtx.Provider value={{ user, graphDown: health === "down" }}>
+    <ShellCtx.Provider value={{ user, graphDown: health === "down", health }}>
       <div className="bg-background flex h-dvh w-full overflow-hidden">
         <Sidebar nav={nav} setNav={go} />
         <div className="flex min-w-0 flex-1 flex-col">
@@ -175,7 +185,9 @@ export default function Shell({ children }: { children: React.ReactNode }) {
                     const h = await api<{ falkordb: "ok" | "down" }>("/health");
                     setHealth(h.falkordb);
                   } catch {
-                    setHealth("down");
+                    // Unknown, not down: the toggle may well have worked
+                    // server-side while this confirmation failed to load.
+                    setHealth("unknown");
                   } finally {
                     setToggling(false);
                   }
@@ -194,14 +206,25 @@ export default function Shell({ children }: { children: React.ReactNode }) {
               <span
                 className={cn(
                   "shadow-ring hidden items-center gap-1.5 rounded-full bg-white px-3 py-1.5 font-mono text-[12px] sm:inline-flex",
-                  health === "ok" ? "text-success" : "text-danger"
+                  health === "ok"
+                    ? "text-success"
+                    : health === "down"
+                      ? "text-danger"
+                      : "text-warning"
                 )}
               >
                 <span
                   aria-hidden
-                  className={cn("size-1.5 rounded-full", health === "ok" ? "bg-success" : "bg-danger")}
+                  className={cn(
+                    "size-1.5 rounded-full",
+                    health === "ok"
+                      ? "bg-success"
+                      : health === "down"
+                        ? "bg-danger"
+                        : "bg-warning animate-pulse"
+                  )}
                 />
-                {health === "ok" ? "connected" : "down"}
+                {health === "ok" ? "connected" : health === "down" ? "down" : "checking..."}
               </span>
               <div className="divide-border shadow-control hidden shrink-0 divide-x overflow-hidden rounded-[10px] bg-white sm:flex">
                 {(["anshu", "priya"] as const).map((u) => (
@@ -242,14 +265,25 @@ export default function Shell({ children }: { children: React.ReactNode }) {
             <span
               className={cn(
                 "ml-auto inline-flex items-center gap-1.5 font-mono text-[12px]",
-                health === "ok" ? "text-success" : "text-danger"
+                health === "ok"
+                  ? "text-success"
+                  : health === "down"
+                    ? "text-danger"
+                    : "text-warning"
               )}
             >
               <span
                 aria-hidden
-                className={cn("size-1.5 rounded-full", health === "ok" ? "bg-success" : "bg-danger")}
+                className={cn(
+                  "size-1.5 rounded-full",
+                  health === "ok"
+                    ? "bg-success"
+                    : health === "down"
+                      ? "bg-danger"
+                      : "bg-warning animate-pulse"
+                )}
               />
-              {health === "ok" ? "connected" : "down"}
+              {health === "ok" ? "connected" : health === "down" ? "down" : "checking..."}
             </span>
           </div>
 
